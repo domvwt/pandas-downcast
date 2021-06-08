@@ -1,19 +1,22 @@
-import numpy as np
-import pandas as pd
 import pytest
 
 import pdcast as pc
-
-series_mocks = [
-    (pd.Series(np.zeros(12)), np.bool_),
-    (pd.Series(np.ones(12)), np.bool_),
-    (pd.Series([1, 0] * 6), np.bool_),
-    (pd.Series([1, 0, None] * 4), pd.Int8Dtype()),
-    (pd.Series([None] * 12), pd.Int8Dtype()),
-]
+from tests.conftest import boolean_mocks, float_mocks, integer_mocks
 
 
-@pytest.mark.parametrize("test_input,expected", series_mocks)
-def test_smallest_viable_type(test_input, expected):
+@pytest.mark.parametrize("test_input,expected", boolean_mocks)
+def test_smallest_viable_type_bool(test_input, expected):
+    output = pc.smallest_viable_type(test_input)
+    assert output == expected
+
+
+@pytest.mark.parametrize("test_input,expected", integer_mocks)
+def test_smallest_viable_type_int(test_input, expected):
+    output = pc.smallest_viable_type(test_input)
+    assert output == expected
+
+
+@pytest.mark.parametrize("test_input,expected", float_mocks)
+def test_smallest_viable_type_float(test_input, expected):
     output = pc.smallest_viable_type(test_input)
     assert output == expected

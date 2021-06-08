@@ -1,7 +1,9 @@
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from pandas import DataFrame, Series
+from pandas._typing import FrameOrSeries
 
 ALL_NAN_TYPE = pd.Int8Dtype()
 
@@ -32,7 +34,7 @@ class ValidTypeFound(Exception):
     pass
 
 
-def smallest_viable_type(srs: pd.Series, cat_thresh=0.95, sample_size=None):
+def smallest_viable_type(srs: Series, cat_thresh=0.95, sample_size=None):
     """Determine smallest viable type for Pandas Series."""
 
     original_dtype = srs.dtype
@@ -56,7 +58,7 @@ def smallest_viable_type(srs: pd.Series, cat_thresh=0.95, sample_size=None):
             val_range = srs.min(), srs.max()
             val_min, val_max = val_range[0], val_range[1]
             is_signed = val_range[0] < 0
-            is_nullable = srs.isna().sum() > 0
+            is_nullable = srs.isna().any()
             is_decimal = not np.isclose(np.nansum(np.mod(srs.values, 1)), 0)
 
             if not is_decimal:
@@ -66,6 +68,12 @@ def smallest_viable_type(srs: pd.Series, cat_thresh=0.95, sample_size=None):
                     and close_to_0_or_1(val_max)
                     and srs.dropna().unique().shape[0] <= 2
                 ):
+                    # Convert values close to zero to exactly zero and values close to one to exactly one
+                    # so that Pandas allows recast to int type
+                    srs = np.where(np.isclose(srs, 0), 0, srs)
+                    srs = np.where(np.isclose(srs, 1), 1, srs)
+                    srs = Series(srs)
+
                     first_valid_type(srs, BOOLEAN_TYPES)
 
                 if is_nullable:
@@ -107,25 +115,36 @@ def smallest_viable_type(srs: pd.Series, cat_thresh=0.95, sample_size=None):
     return original_dtype
 
 
-def minimum_viable_schema(
-    df: pd.DataFrame, cat_thresh=0.8, sample_size=10_000
+def infer_schema(
+    data: FrameOrSeries, cat_thresh=0.8, sample_size=10_000
 ) -> Dict[str, Any]:
-    """Determine minimum viable schema for Pandas DataFrame."""
-    df = df.copy()
+    """Infer minimum viable schema."""
+    data = data.copy()
     if sample_size:
-        # Use head and tail in case DataFrame is sorted
-        df = sample_head_tail(df)
+        # Use head and tail in case data is sorted
+        data = sample_head_tail(data)
     schema = {
         str(col): smallest_viable_type(srs, cat_thresh=cat_thresh)
-        for col, srs in df.iteritems()
+        for col, srs in data.iteritems()
     }
     return schema
 
 
-def sample_head_tail(df: pd.DataFrame, sample_size: int = 10_000):
+def downcast(
+    data: FrameOrSeries, return_schema=False, cat_thresh=0.8, sample_size=10_000
+) -> Union[DataFrame, Series, Tuple[FrameOrSeries, Dict[str, Any]]]:
+    """Infer and apply minimum viable schema."""
+    data = data.copy()
+    schema = infer_schema(data, cat_thresh=cat_thresh, sample_size=sample_size)
+    data = data.astype(schema)
+    result = data if not return_schema else data, schema
+    return result
+
+
+def sample_head_tail(data: FrameOrSeries, sample_size: int = 10_000):
     """Sample from head and tail of DataFrame."""
     half_sample = sample_size // 2
-    return df[:half_sample].append(df[-half_sample:])
+    return data[:half_sample].append(data[-half_sample:])
 
 
 def close_to_0_or_1(x: np.number) -> bool:
@@ -133,10 +152,21 @@ def close_to_0_or_1(x: np.number) -> bool:
     return np.isclose(x, 0) or np.isclose(x, 1)
 
 
-def type_cast_valid(srs: pd.Series, data_type) -> bool:
+def type_cast_valid(srs: Series, data_type) -> bool:
     """Check `srs` can be cast to `data_type` without loss of information."""
-    srs_new = srs.astype(data_type)
-    if isinstance(srs.dtype, np.number) and isinstance(data_type, np.number):
+    try:
+        srs_new = srs.astype(data_type)
+    except TypeError:
+        return False
+
+    sdtype = srs.dtype
+
+    def is_numeric_typelike(x) -> bool:
+        return (isinstance(x, type) and issubclass(x, np.number)) or (
+            isinstance(x, np.dtype) and np.issubdtype(srs.dtype, np.number)
+        )
+
+    if is_numeric_typelike(sdtype) and is_numeric_typelike(data_type):
         return np.allclose(srs_new, srs, equal_nan=True)
     else:
-        return pd.Series(srs == srs_new).all()
+        return Series(srs == srs_new).all()

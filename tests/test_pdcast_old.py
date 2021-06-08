@@ -7,7 +7,7 @@ from uuid import uuid4
 import numpy as np  # type: ignore
 import pandas as pd
 
-from pdcast import minimum_viable_schema
+from pdcast import infer_schema
 
 np.random.seed(1234)
 
@@ -75,7 +75,7 @@ df00: pd.DataFrame = pd.DataFrame(data_dict).sample(frac=1)  # type: ignore
 
 start = dt.datetime.now()
 # TODO: get optimal cardinality thresh
-schema = minimum_viable_schema(df00, cat_thresh=0.8)
+schema = infer_schema(df00, cat_thresh=0.8)
 end = dt.datetime.now()
 start_size = round(np.sum(df00.memory_usage(deep=True)) / 1024 / 1024, 2)
 df01 = df00.astype(schema)

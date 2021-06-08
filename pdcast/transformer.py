@@ -9,7 +9,7 @@ if "sklearn" in _INSTALLED_MODULES:
 
     import pdcast
 
-    class PandasDowncaster(BaseEstimator, TransformerMixin):
+    class Downcaster(BaseEstimator, TransformerMixin):
         """Apply minimum viable schema to Pandas DataFrame."""
 
         schema_: Optional[Dict[str, Any]] = None
@@ -20,7 +20,7 @@ if "sklearn" in _INSTALLED_MODULES:
                 raise TypeError(type(X))
 
             df = X.copy()
-            self.schema_ = pdcast.minimum_viable_schema(df)
+            self.schema_ = pdcast.infer_schema(df)
 
         def transform(self, X: DataFrame, y=None, **transform_params) -> DataFrame:
 

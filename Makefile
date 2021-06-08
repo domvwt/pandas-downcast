@@ -1,5 +1,5 @@
 format: ## apply black code formatter
-	black .
+	black pdcast
 
 lint: ## check style with flake8
 	flake8 pdcast tests

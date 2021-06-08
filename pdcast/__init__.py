@@ -6,7 +6,7 @@ from importlib.util import find_spec as _find_spec
 from pathlib import Path as _Path
 from typing import Set as _Set
 
-from pdcast.core import minimum_viable_schema, smallest_viable_type
+from pdcast.core import infer_schema, smallest_viable_type
 
 _MODULE_PATH: _Path = _Path(__file__).parent.absolute()
 
@@ -19,4 +19,4 @@ _INSTALLED_MODULES: _Set[str] = {
 
 
 if "sklearn" in _INSTALLED_MODULES:
-    from pdcast.transformer import PandasDowncaster
+    from pdcast.transformer import Downcaster
