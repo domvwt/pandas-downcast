@@ -32,7 +32,6 @@ coverage = "^5.5"
 mypy = "^0.812"
 tox = "^3.23.0"
 flake8 = "^3.9.0"
-scikit-learn = "^0.24.2"
 isort = "^5.8.0"
 
 [build-system]
