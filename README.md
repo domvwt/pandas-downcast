@@ -49,8 +49,7 @@ schema = pdc.infer_schema(df)
 df_new = pdc.coerce_df(df, schema)
 ```
 
-## Additional Notes
-Smaller types == smaller memory footprint.
+Smaller data types == smaller memory footprint.
 
 ```python
 df.info()
@@ -147,6 +146,7 @@ The following example shows how downcasting data often leads to size reductions 
 
 ```python
 import pdcast as pdc
+import pandas as pd
 import seaborn as sns
 
 df_dict = {df: sns.load_dataset(df) for df in sns.get_dataset_names()}
@@ -162,7 +162,7 @@ for name, df in df_dict.items():
         {"dataset": name, "size_pre": mem_usage_pre, "size_post": mem_usage_post, "shrink_pct": shrinkage}
     )
 
-results_df = pd.DataFrame(results).sort_values("shrink_pct", ascending=False).reset_index()
+results_df = pd.DataFrame(results).sort_values("shrink_pct", ascending=False).reset_index(drop=True)
 print(results_df)
 ```
 ```
