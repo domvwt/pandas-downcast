@@ -46,7 +46,7 @@ df_downcast = pdc.downcast(df)
 schema = pdc.infer_schema(df)
 
 # Coerce DataFrame to schema - required if converting float to Pandas Integer.
-df_new = pdc.coerce_df(df)
+df_new = pdc.coerce_df(df, schema)
 ```
 
 ## Additional Notes
