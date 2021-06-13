@@ -7,7 +7,7 @@ Pandas Downcast
 [![codecov](https://codecov.io/gh/domvwt/pandas-downcast/branch/main/graph/badge.svg?token=TQPLURKQ9Z)](https://codecov.io/gh/domvwt/pandas-downcast)
 
 Shrink [Pandas](https://pandas.pydata.org/) DataFrames with intelligent schema inference. 
-`pandas-downcast` finds the minimum viable type for each column, checking that resulting values
+`pandas-downcast` finds the minimum viable type for each column, ensuring that resulting values
 are within tolerance of original values.
 
 ## Installation
