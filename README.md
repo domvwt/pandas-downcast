@@ -51,6 +51,7 @@ df_new = pdc.coerce_df(df)
 
 ## Additional Notes
 Smaller types == smaller memory footprint.
+
 ```python
 df.info()
 # <class 'pandas.core.frame.DataFrame'>
@@ -81,6 +82,7 @@ df_downcast.info()
 
 Numerical data types will be downcast if the resulting values are within tolerance of the original values.
 For details on tolerance for numeric comparison, see the notes on [`np.allclose`](https://numpy.org/doc/stable/reference/generated/numpy.allclose.html).
+
 ```python
 print(df.head())
 #    integers  floats  booleans categories
@@ -105,7 +107,9 @@ print(pdc.options.ATOL)
 print(pdc.options.RTOL)
 # >>> 1e-05
 ```
+
 Tolerance can be set at module level or passed in function arguments:
+
 ```python
 pdc.options.ATOL = 1e-10
 pdc.options.RTOL = 1e-10
@@ -119,8 +123,10 @@ infer_dtype_kws = {
 }
 df_downcast_new = pdc.downcast(df, infer_dtype_kws=infer_dtype_kws)
 ```
+
 The `floats` column is now kept as `float64` to meet the tolerance requirement. 
 Values in the `integers` column are still safely cast to `uint8`.
+
 ```python
 df_downcast_new.info()
 # <class 'pandas.core.frame.DataFrame'>
