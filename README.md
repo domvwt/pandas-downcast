@@ -6,7 +6,9 @@ Pandas Downcast
 [![Build Status](https://travis-ci.com/domvwt/pandas-downcast.svg?branch=main)](https://travis-ci.com/domvwt/pandas-downcast)
 [![codecov](https://codecov.io/gh/domvwt/pandas-downcast/branch/main/graph/badge.svg?token=TQPLURKQ9Z)](https://codecov.io/gh/domvwt/pandas-downcast)
 
-Safely infer minimum viable schema for Pandas `DataFrame` and `Series`.
+Shrink [Pandas](https://pandas.pydata.org/) DataFrames with intelligent schema inference. 
+`pandas-downcast` finds the minimum viable type for each column, ensuring that resulting values
+are within tolerance of original values.
 
 ## Installation
 ```bash
@@ -49,6 +51,7 @@ df_new = pdc.coerce_df(df)
 
 ## Additional Notes
 Smaller types == smaller memory footprint.
+
 ```python
 df.info()
 # <class 'pandas.core.frame.DataFrame'>
@@ -79,6 +82,7 @@ df_downcast.info()
 
 Numerical data types will be downcast if the resulting values are within tolerance of the original values.
 For details on tolerance for numeric comparison, see the notes on [`np.allclose`](https://numpy.org/doc/stable/reference/generated/numpy.allclose.html).
+
 ```python
 print(df.head())
 #    integers  floats  booleans categories
@@ -103,7 +107,9 @@ print(pdc.options.ATOL)
 print(pdc.options.RTOL)
 # >>> 1e-05
 ```
+
 Tolerance can be set at module level or passed in function arguments:
+
 ```python
 pdc.options.ATOL = 1e-10
 pdc.options.RTOL = 1e-10
@@ -117,8 +123,10 @@ infer_dtype_kws = {
 }
 df_downcast_new = pdc.downcast(df, infer_dtype_kws=infer_dtype_kws)
 ```
+
 The `floats` column is now kept as `float64` to meet the tolerance requirement. 
 Values in the `integers` column are still safely cast to `uint8`.
+
 ```python
 df_downcast_new.info()
 # <class 'pandas.core.frame.DataFrame'>
@@ -134,3 +142,47 @@ df_downcast_new.info()
 # memory usage: 1.3 KB
 ```
 
+## Example
+The following example shows how downcasting data often leads to size reductions of **greater than 70%**, depending on the original types.
+
+```python
+import pdcast as pdc
+import seaborn as sns
+
+df_dict = {df: sns.load_dataset(df) for df in sns.get_dataset_names()}
+
+results = []
+
+for name, df in df_dict.items():
+    mem_usage_pre = df.memory_usage(deep=True).sum()
+    df_post = pdc.downcast(df)
+    mem_usage_post = df_post.memory_usage(deep=True).sum()
+    shrinkage = int((1 - (mem_usage_post / mem_usage_pre)) * 100)
+    results.append(
+        {"dataset": name, "size_pre": mem_usage_pre, "size_post": mem_usage_post, "shrink_pct": shrinkage}
+    )
+
+results_df = pd.DataFrame(results).sort_values("shrink_pct", ascending=False).reset_index()
+print(results_df)
+```
+```
+           dataset  size_pre  size_post  shrink_pct
+0             fmri    213232      14776          93
+1          titanic    321240      28162          91
+2        attention      5888        696          88
+3         penguins     75711       9131          87
+4             dots    122240      17488          85
+5           geyser     21172       3051          85
+6           gammas    500128     108386          78
+7         anagrams      2048        456          77
+8          planets    112663      30168          73
+9         anscombe      3428        964          71
+10            iris     14728       5354          63
+11        exercise      3302       1412          57
+12         flights      3616       1888          47
+13             mpg     75756      43842          42
+14            tips      7969       6261          21
+15        diamonds   3184588    2860948          10
+16  brain_networks   4330642    4330642           0
+17     car_crashes      5993       5993           0
+```
