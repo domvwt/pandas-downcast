@@ -1,7 +1,7 @@
 Pandas Downcast
 ===============
 
-Safely infer minimum viable schema for Pandas DataFrames and Series.
+Safely infer minimum viable schema for Pandas `DataFrame` and `Series`.
 
 ## Installation
 ```bash
