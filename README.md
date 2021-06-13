@@ -150,7 +150,9 @@ for name, df in df_dict.items():
     df_post = pdc.downcast(df)
     mem_usage_post = df_post.memory_usage(deep=True).sum()
     shrinkage = int((1 - (mem_usage_post / mem_usage_pre)) * 100)
-    results.append({"dataset": name, "size_pre": mem_usage_pre, "size_post": mem_usage_post, "shrink_pct": shrinkage})
+    results.append(
+        {"dataset": name, "size_pre": mem_usage_pre, "size_post": mem_usage_post, "shrink_pct": shrinkage}
+    )
 
 results_df = pd.DataFrame(results).sort_values("shrink_pct", ascending=False).reset_index()
 print(results_df)
