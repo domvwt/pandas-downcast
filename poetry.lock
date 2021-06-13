@@ -107,7 +107,7 @@ version = "5.5"
 toml = ["toml"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "A backport of the dataclasses module for Python 3.6"
 marker = "python_version < \"3.7\""
 name = "dataclasses"
@@ -527,7 +527,7 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "pytest-enabler", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [metadata]
-content-hash = "7172d5bf3c52b0190aa75b77c29fb7bdf823d94c11e7f2544d39dae80f5cee0d"
+content-hash = "56c345dd8a4258ebb8337d34491c07fa436f4f273bc71fdf92cfebd921990ae6"
 lock-version = "1.0"
 python-versions = ">=3.6.1,<4"
 
