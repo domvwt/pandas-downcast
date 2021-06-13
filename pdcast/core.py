@@ -1,56 +1,59 @@
+# -*- coding: utf-8 -*-
+"""Core functions for downcasting Pandas DataFrames and Series."""
+
+from dataclasses import dataclass
 from typing import Any, Dict, Hashable, Iterable, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame, Series
+from pandas.core.frame import DataFrame
+from pandas.core.series import Series
 from pandas._typing import FrameOrSeries
 
-# TODO: Change string numerics to numeric types (optional)
+import pdcast.types as tc
 
-ALL_NAN_TYPE = pd.Int8Dtype()
 
-BOOLEAN_TYPES = [np.bool_, pd.Int8Dtype()]
+@dataclass
+class Options:
+    """Config options for `pdcast`."""
+    RTOL = 1e-05
+    """Default relative tolerance for numpy inexact numeric comparison
+    See: https://numpy.org/doc/stable/reference/generated/numpy.allclose.html"""
 
-UINT_TYPES = [np.uint8, np.uint16, np.uint32, np.uint64]
+    ATOL = 1e-08
+    """Default absolute tolerance for numpy inexact numeric comparison
+    See: https://numpy.org/doc/stable/reference/generated/numpy.allclose.html"""
 
-UINT_NULLABLE_TYPES = [
-    pd.UInt8Dtype(),
-    pd.UInt16Dtype(),
-    pd.UInt32Dtype(),
-    pd.UInt64Dtype(),
-]
 
-INT_TYPES = [np.int8, np.int16, np.int32, np.int64]
-
-INT_NULLABLE_TYPES = [
-    pd.Int8Dtype(),
-    pd.Int16Dtype(),
-    pd.Int32Dtype(),
-    pd.Int64Dtype(),
-]
-
-FLOAT_TYPES = [np.float16, np.float32, np.float64, np.float128]
-
-# Default tolerance from numpy inexact numeric comparison
-# See: https://numpy.org/doc/stable/reference/generated/numpy.allclose.html
-RTOL = 1e-05
-ATOL = 1e-08
+options = Options()
 
 
 class _ValidTypeFound(Exception):
-    pass
+    """ """
 
 
-def smallest_viable_type(
-    srs: Series,
-    cat_thresh=0.8,
-    sample_size=None,
+def infer_dtype(
+    series: Series,
+    cat_thresh: float = 0.8,
     rtol: float = None,
     atol: float = None,
 ):
-    """Determine smallest viable type for Pandas Series."""
+    """Determine smallest viable type for Pandas Series.
 
-    original_dtype = srs.dtype
+    Args:
+        series (Series): Pandas Series.
+        cat_thresh (float): Categorical value threshold. (Default value = 0.8)
+            Non-numeric variables with proportion of unique values less than
+            `cat_thresh` will be cast to Categorical type.
+        rtol (float): Absolute tolerance for numeric equality. (Default value = None)
+        atol (float): Relative tolerance for numeric equality. (Default value = None)
+
+    Returns:
+        Smallest viable Numpy or Pandas data type for `series`.
+
+    """
+
+    original_dtype = series.dtype
     valid_type = None
 
     def assign_valid_type(data_type):
@@ -63,17 +66,14 @@ def smallest_viable_type(
             if type_cast_valid(srs, data_type):
                 assign_valid_type(data_type)
 
-    if sample_size and srs.size > sample_size:
-        srs = srs.sample(n=sample_size)  # type: ignore
-
     try:
         if pd.api.types.is_numeric_dtype(original_dtype):
-            val_range = srs.min(), srs.max()
+            val_range = series.min(), series.max()
             val_min, val_max = val_range[0], val_range[1]
             is_signed = val_range[0] < 0
-            is_nullable = srs.isna().any()
+            is_nullable = series.isna().any()
 
-            srs_mod_one = np.mod(srs.fillna(0), 1)
+            srs_mod_one = np.mod(series.fillna(0), 1)
             is_decimal = not all(close_to_val(srs_mod_one, 0))
 
             if not is_decimal:
@@ -81,44 +81,44 @@ def smallest_viable_type(
                 if (
                     close_to_0_or_1(val_min, rtol, atol)
                     and close_to_0_or_1(val_max, rtol, atol)
-                    and srs.dropna().unique().shape[0] <= 2
+                    and series.dropna().unique().shape[0] <= 2
                 ):
-                    # Convert values close to zero to exactly zero and values close to one to exactly one
-                    # so that Pandas allows recast to int type
-                    srs = np.where(close_to_val(srs, 0, rtol, atol), 0, srs)
-                    srs = np.where(close_to_val(srs, 1, rtol, atol), 1, srs)
-                    srs = Series(srs)
+                    # Convert values close to zero to exactly zero and values close to one to
+                    # exactly one so that Pandas allows recast to int type
+                    series = np.where(close_to_val(series, 0, rtol, atol), 0, series)
+                    series = np.where(close_to_val(series, 1, rtol, atol), 1, series)
+                    series = Series(series)
 
-                    first_valid_type(srs, BOOLEAN_TYPES)
+                    first_valid_type(series, tc.BOOLEAN_TYPES)
 
                 if is_nullable:
                     if is_signed:
-                        first_valid_type(srs, INT_NULLABLE_TYPES)
+                        first_valid_type(series, tc.INT_NULLABLE_TYPES)
 
                     # Unsigned
                     else:
                         # Other integer types
-                        first_valid_type(srs, UINT_NULLABLE_TYPES)
+                        first_valid_type(series, tc.UINT_NULLABLE_TYPES)
 
                 # Not nullable
                 else:
                     if is_signed:
-                        first_valid_type(srs, INT_TYPES)
+                        first_valid_type(series, tc.INT_TYPES)
                     # Unsigned
                     else:
-                        first_valid_type(srs, UINT_TYPES)
+                        first_valid_type(series, tc.UINT_TYPES)
             # Float type
-            first_valid_type(srs, FLOAT_TYPES)
+            first_valid_type(series, tc.FLOAT_TYPES)
 
-        elif srs.isna().all():
-            assign_valid_type(ALL_NAN_TYPE)
+        elif series.isna().all():
+            assign_valid_type(tc.ALL_NAN_TYPE)
 
         # Non-numeric
         else:
-            unique_count = srs.dropna().unique().shape[0]
-            srs_length = srs.dropna().shape[0]
+            unique_count = series.dropna().unique().shape[0]
+            srs_length = series.dropna().shape[0]
             unique_pct = unique_count / srs_length
-            # Cast to `categorical` if percentage of unique value less than threshold
+            # Cast to `categorical` if percentage of uniques value less than threshold
             if unique_pct < cat_thresh:
                 assign_valid_type(pd.CategoricalDtype())
             assign_valid_type(np.object_)
@@ -127,6 +127,9 @@ def smallest_viable_type(
         return valid_type
 
     # Keep original type if nothing else works
+    except TypeError:
+        pass
+
     return original_dtype
 
 
@@ -134,36 +137,59 @@ def infer_schema(
     data: FrameOrSeries,
     include: Iterable[Hashable] = None,
     exclude: Iterable[Hashable] = None,
-    cat_thresh: float = 0.8,
     sample_size: int = 10_000,
-    rtol: float = None,
-    atol: float = None,
+    infer_dtype_kws: Dict[str, Any] = None,
 ) -> Dict[Any, Any]:
-    """Infer minimum viable schema."""
+    """Infer minimum viable schema for `data`.
+
+    Args:
+        data (FrameOrSeries): Pandas DataFrame or Series.
+        include (Iterable[Hashable]): Columns to include. (Default value = None)
+            Excludes all other columns if defined.
+        exclude (Iterable[Hashable]): Columns to exclude. (Default value = None)
+        sample_size (int): Number of records to take from head and tail. (Default value = 10_000)
+        infer_dtype_kws (Dict[Any, Any]): Keyword arguments for `infer_dtype`. (Default value = None)
+
+    Returns:
+        Dict[str, Any]: Inferred schema.
+
+    """
+    if not isinstance(data, (DataFrame, Series)):
+        raise TypeError(type(data))
     data = data.copy()
+    if not infer_dtype_kws:
+        infer_dtype_kws = {}
     # Use head and tail in case data is sorted
     if sample_size and data.shape[0] > sample_size:
-        data = sample_head_tail(data)
+        data = take_head_and_tail(data)
     if isinstance(data, Series):
-        schema = {data.name: smallest_viable_type(data)}
-    if isinstance(data, DataFrame):
+        schema = {data.name: infer_dtype(data, **infer_dtype_kws)}
+    else:  # DataFrame
         target_cols = include or data.columns
         if exclude:
             target_cols = [col for col in target_cols if col not in set(exclude)]
         schema = {
             col: (
-                smallest_viable_type(srs, cat_thresh=cat_thresh, rtol=rtol, atol=atol)
+                infer_dtype(srs, **infer_dtype_kws)
                 if col in set(target_cols)
                 else srs.dtype
             )
             for col, srs in data.iteritems()
         }
-    else:
-        raise TypeError(data)
     return schema
 
 
 def coerce_df(df: DataFrame, schema: dict) -> FrameOrSeries:
+    """Coerce DataFrame to `schema`.
+
+    Args:
+        df (DataFrame): Pandas DataFrame.
+        schema (dict): Target schema.
+
+    Returns:
+        DataFrame: Pandas DataFrame with `schema`.
+
+    """
     df = df.copy()
     try:
         df = df.astype(schema)  # type: ignore
@@ -173,20 +199,24 @@ def coerce_df(df: DataFrame, schema: dict) -> FrameOrSeries:
     return df
 
 
-def coerce_series(srs: Series, dtype: Any) -> FrameOrSeries:
-    srs = srs.copy()
+def coerce_series(series: Series, dtype: Any) -> FrameOrSeries:
+    """Coerce Series to `dtype`.
+
+    Args:
+        series (Series): Pandas Series.
+        dtype (Any): Target data type.
+
+    Returns:
+        Series: Pandas Series of type `dtype`.
+
+    """
+    series = series.copy()
     try:
-        srs = srs.astype(dtype)  # type: ignore
+        series = series.astype(dtype)  # type: ignore
     except TypeError:
-        if (
-            pd.api.types.is_integer_dtype(dtype)
-            and not pd.api.types.is_integer_dtype(srs)
-            and srs.dropna().shape[0]
-        ):
-            srs = srs.round(0).astype(dtype)  # type: ignore
-        else:
-            srs = srs.astype(dtype)  # type: ignore
-    return srs
+        # TypeError thrown when converting float to int without rounding
+        series = series.round(0).astype(dtype)  # type: ignore
+    return series
 
 
 def downcast(
@@ -194,34 +224,54 @@ def downcast(
     include: Iterable[Hashable] = None,
     exclude: Iterable[Hashable] = None,
     return_schema: bool = False,
-    cat_thresh: float = 0.8,
     sample_size: int = 10_000,
-    rtol: float = None,
-    atol: float = None,
+    infer_dtype_kws: Dict[str, Any] = None,
 ) -> Union[DataFrame, Series, Tuple[FrameOrSeries, dict]]:
-    """Infer and apply minimum viable schema."""
+    """Infer and apply minimum viable schema.
+
+    Args:
+        data (FrameOrSeries):
+        include (Iterable[Hashable]): Columns to include. (Default value = None)
+            Excludes all other columns if defined.
+        exclude (Iterable[Hashable]): Columns to exclude. (Default value = None)
+        return_schema (bool): Return inferred schema if True. (Default value = False)
+        sample_size (int): Number of records to take from head and tail. (Default value = 10_000)
+        infer_dtype_kws (Dict[str, Any]): Keyword arguments for `infer_dtype`. (Default value = None)
+
+    Returns:
+        FrameOrSeries: Downcast Pandas DataFrame or Series.
+        Dict[Any, Any]: Inferred schema. (if `return_schema` is True)
+
+    """
     data = data.copy()
     schema = infer_schema(
         data,
         include=include,
         exclude=exclude,
-        cat_thresh=cat_thresh,
         sample_size=sample_size,
-        rtol=rtol,
-        atol=atol,
+        infer_dtype_kws=infer_dtype_kws,
     )
     if isinstance(data, Series):
         dtype = schema[data.name]
         data = coerce_series(data, dtype)
-    else:
+    elif isinstance(data, DataFrame):
         data = coerce_df(data, schema)
     if return_schema:
         return data, schema
     return data
 
 
-def sample_head_tail(data: FrameOrSeries, sample_size: int = 10_000):
-    """Sample from head and tail of DataFrame."""
+def take_head_and_tail(data: FrameOrSeries, sample_size: int = 10_000) -> FrameOrSeries:
+    """Take head and tail of DataFrame.
+
+    Args:
+        data (FrameOrSeries): Pandas DataFrame or Series.
+        sample_size (int): Number of records to take. (Default value = 10_000)
+
+    Returns:
+        FrameOrSeries: Resampled `data`.
+
+    """
     if data.shape[0] > sample_size:
         half_sample = sample_size // 2
         data = data[:half_sample].append(data[-half_sample:])
@@ -229,67 +279,84 @@ def sample_head_tail(data: FrameOrSeries, sample_size: int = 10_000):
 
 
 def type_cast_valid(
-    srs: Series, data_type: Any, rtol: float = None, atol: float = None
+    series: Series, data_type: Any, rtol: float = None, atol: float = None
 ) -> bool:
-    """Check `srs` can be cast to `data_type` without loss of information."""
+    """Check `series` can be cast to `data_type` without loss of information.
+
+    Args:
+        series (Series): Pandas Series.
+        data_type (Any): Any data type.
+        rtol (float): Absolute tolerance for numeric equality. (Default value = None)
+        atol (float): Relative tolerance for numeric equality. (Default value = None)
+
+    Returns:
+        bool: True if type if valid, False otherwise.
+
+    """
     try:
-        srs_new = srs.astype(data_type)
+        srs_new = series.astype(data_type)
     except TypeError:
         return False
-    sdtype = srs.dtype
-    rtol = rtol or RTOL
-    atol = atol or ATOL
+    sdtype = series.dtype
+    rtol = rtol or options.RTOL
+    atol = atol or options.ATOL
     if is_numeric_typelike(sdtype) and is_numeric_typelike(data_type):
-        return np.allclose(srs_new, srs, equal_nan=True, rtol=rtol, atol=atol)
-    else:
-        return Series(srs == srs_new).all()
+        return np.allclose(srs_new, series, equal_nan=True, rtol=rtol, atol=atol)
+    return Series(series == srs_new).all()
 
 
-def is_numeric_typelike(x) -> bool:
-    return (isinstance(x, type) and issubclass(x, np.number)) or (
-        isinstance(x, np.dtype) and np.issubdtype(x, np.number)
+def is_numeric_typelike(dtype) -> bool:
+    """Check whether `dtype` is a numeric type or class.
+
+    Args:
+        dtype: Any data type class or object.
+
+    Returns:
+        bool: True if numeric type, False otherwise.
+
+    """
+    return (isinstance(dtype, type) and issubclass(dtype, np.number)) or (
+        isinstance(dtype, np.dtype) and np.issubdtype(dtype, np.number)
     )
 
 
 def close_to_val(
-    srs: Series, val: Union[int, float], rtol: float = None, atol: float = None
+    series: Series, val: Union[int, float], rtol: float = None, atol: float = None
 ) -> Series:
-    rtol = rtol or RTOL
-    atol = atol or ATOL
+    """Check all `series` values close to `val`.
+
+    Args:
+        series (Series): Pandas Series.
+        val (Union[int, float]): Value for comparison.
+        rtol (float): Absolute tolerance for numeric equality. (Default value = None)
+        atol (float): Relative tolerance for numeric equality. (Default value = None)
+
+    Returns:
+        bool: True if all close to `val`, False otherwise.
+
+    """
+    rtol = rtol or options.RTOL
+    atol = atol or options.ATOL
     try:
-        return np.isclose(srs, val, rtol=rtol, atol=atol)
+        return np.isclose(series, val, rtol=rtol, atol=atol)
     except TypeError:
-        return pd.Series(srs == val)
+        return pd.Series(series == val)
 
 
-def check_frames_equal(
-    a: DataFrame, b: DataFrame, rtol: float = None, atol: float = None
-) -> bool:
-    rtol = rtol or RTOL
-    atol = atol or ATOL
-    cond1 = all(a.columns == b.columns)
-    cond2 = a.shape == b.shape
-    if not (cond1 and cond2):
-        return False
-    for i in range(a.shape[1]):
-        a_col = a.iloc[:, i]
-        b_col = b.iloc[:, i]
-        try:
-            if not np.allclose(a_col, b_col, rtol=rtol, atol=atol):
-                return False
-        except TypeError:
-            if not a_col.tolist() == b_col.tolist():
-                return False
-    return True
+def close_to_0_or_1(num: np.number, rtol: float = None, atol: float = None) -> bool:
+    """Check if `num` is close to zero or one.
 
+    Args:
+        num (np.number): Number for comparison.
+        rtol (float): Absolute tolerance for numeric equality. (Default value = None)
+        atol (float): Relative tolerance for numeric equality. (Default value = None)
 
-def close_to_0_or_1(x: np.number, rtol: float = None, atol: float = None) -> bool:
-    """Check if `x` is close to zero or one."""
-    rtol = rtol or RTOL
-    atol = atol or ATOL
-    try:
-        return np.isclose(x, 0, rtol=rtol, atol=atol) or np.isclose(
-            x, 1, rtol=rtol, atol=atol
-        )
-    except TypeError:
-        return x == 0 or x == 1
+    Returns:
+        bool: True if all close to 0 or 1, False otherwise.
+
+    """
+    rtol = rtol or options.RTOL
+    atol = atol or options.ATOL
+    return np.isclose(num, 0, rtol=rtol, atol=atol) or np.isclose(
+        num, 1, rtol=rtol, atol=atol
+    )

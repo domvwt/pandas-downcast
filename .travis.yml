@@ -1,0 +1,18 @@
+sudo: false
+language: python
+os: linux
+dist: xenial
+python:
+  - 3.6
+  - 3.7
+  - 3.8
+  - 3.9
+
+install:
+  - pip install . pytest coverage
+
+script:
+  - coverage run --append --source pdcast -m pytest
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
