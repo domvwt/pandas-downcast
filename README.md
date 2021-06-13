@@ -153,145 +153,26 @@ for name, df in df_dict.items():
     results.append({"dataset": name, "size_pre": mem_usage_pre, "size_post": mem_usage_post, "shrink_pct": shrinkage})
 
 results_df = pd.DataFrame(results).sort_values("shrink_pct", ascending=False).reset_index()
-results_df
+print(results_df)
 ```
-
-<table class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>dataset</th>
-      <th>size_pre</th>
-      <th>size_post</th>
-      <th>shrink_pct</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>fmri</td>
-      <td>213232</td>
-      <td>14776</td>
-      <td>93</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>titanic</td>
-      <td>321240</td>
-      <td>28162</td>
-      <td>91</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>attention</td>
-      <td>5888</td>
-      <td>696</td>
-      <td>88</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>penguins</td>
-      <td>75711</td>
-      <td>9131</td>
-      <td>87</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>dots</td>
-      <td>122240</td>
-      <td>17488</td>
-      <td>85</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>geyser</td>
-      <td>21172</td>
-      <td>3051</td>
-      <td>85</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>gammas</td>
-      <td>500128</td>
-      <td>108386</td>
-      <td>78</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>anagrams</td>
-      <td>2048</td>
-      <td>456</td>
-      <td>77</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>planets</td>
-      <td>112663</td>
-      <td>30168</td>
-      <td>73</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>anscombe</td>
-      <td>3428</td>
-      <td>964</td>
-      <td>71</td>
-    </tr>
-    <tr>
-      <th>10</th>
-      <td>iris</td>
-      <td>14728</td>
-      <td>5354</td>
-      <td>63</td>
-    </tr>
-    <tr>
-      <th>11</th>
-      <td>exercise</td>
-      <td>3302</td>
-      <td>1412</td>
-      <td>57</td>
-    </tr>
-    <tr>
-      <th>12</th>
-      <td>flights</td>
-      <td>3616</td>
-      <td>1888</td>
-      <td>47</td>
-    </tr>
-    <tr>
-      <th>13</th>
-      <td>mpg</td>
-      <td>75756</td>
-      <td>43842</td>
-      <td>42</td>
-    </tr>
-    <tr>
-      <th>14</th>
-      <td>tips</td>
-      <td>7969</td>
-      <td>6261</td>
-      <td>21</td>
-    </tr>
-    <tr>
-      <th>15</th>
-      <td>diamonds</td>
-      <td>3184588</td>
-      <td>2860948</td>
-      <td>10</td>
-    </tr>
-    <tr>
-      <th>16</th>
-      <td>brain_networks</td>
-      <td>4330642</td>
-      <td>4330642</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>17</th>
-      <td>car_crashes</td>
-      <td>5993</td>
-      <td>5993</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
+```
+           dataset  size_pre  size_post  shrink_pct
+0             fmri    213232      14776          93
+1          titanic    321240      28162          91
+2        attention      5888        696          88
+3         penguins     75711       9131          87
+4             dots    122240      17488          85
+5           geyser     21172       3051          85
+6           gammas    500128     108386          78
+7         anagrams      2048        456          77
+8          planets    112663      30168          73
+9         anscombe      3428        964          71
+10            iris     14728       5354          63
+11        exercise      3302       1412          57
+12         flights      3616       1888          47
+13             mpg     75756      43842          42
+14            tips      7969       6261          21
+15        diamonds   3184588    2860948          10
+16  brain_networks   4330642    4330642           0
+17     car_crashes      5993       5993           0
+```
