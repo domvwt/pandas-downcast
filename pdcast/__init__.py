@@ -31,6 +31,6 @@ Examples:
 
 __author__ = """Dominic Thorn"""
 __email__ = "dominic.thorn@gmail.com"
-__version__ = "0.1.0.dev1"
+__version__ = "0.1.0"
 
 from pdcast.core import coerce_df, coerce_series, downcast, infer_schema, options

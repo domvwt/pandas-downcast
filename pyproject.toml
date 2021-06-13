@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pandas-downcast"
-version = "0.1.0.dev1"
+version = "0.1.0"
 description = "Automated downcasting for Pandas DataFrames."
 authors = ["Dominic Thorn <dominic.thorn@gmail.com>"]
 license = "MIT"
