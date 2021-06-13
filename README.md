@@ -18,7 +18,7 @@ pip install pandas-downcast
 
 ## Usage
 ```python
-import pdcast as pc
+import pdcast as pdc
 
 import numpy as np
 import pandas as pd
@@ -33,13 +33,13 @@ data = {
 df = pd.DataFrame(data)
 
 # Downcast DataFrame to minimum viable schema.
-df_downcast = pc.downcast(df)
+df_downcast = pdc.downcast(df)
 
 # Infer minimum schema from DataFrame.
-schema = pc.infer_schema(df)
+schema = pdc.infer_schema(df)
 
 # Coerce DataFrame to schema - required if converting float to Pandas Integer.
-df_new = pc.coerce_df(df)
+df_new = pdc.coerce_df(df)
 ```
 
 ## Additional Notes
@@ -92,17 +92,17 @@ print(df_downcast.head())
 # 4         5  41.360001     False        foo
 
 
-print(pc.options.ATOL)
+print(pdc.options.ATOL)
 # >>> 1e-08
 
-print(pc.options.RTOL)
+print(pdc.options.RTOL)
 # >>> 1e-05
 ```
 Tolerance can be set at module level or passed in function arguments:
 ```python
-pc.options.ATOL = 1e-10
-pc.options.RTOL = 1e-10
-df_downcast_new = pc.downcast(df)
+pdc.options.ATOL = 1e-10
+pdc.options.RTOL = 1e-10
+df_downcast_new = pdc.downcast(df)
 ```
 Or
 ```python
@@ -110,7 +110,7 @@ infer_dtype_kws = {
     "ATOL": 1e-10,
     "RTOL": 1e-10
 }
-df_downcast_new = pc.downcast(df, infer_dtype_kws=infer_dtype_kws)
+df_downcast_new = pdc.downcast(df, infer_dtype_kws=infer_dtype_kws)
 ```
 The `floats` column is now kept as `float64` to meet the tolerance requirement. 
 Values in the `integers` column are still safely cast to `uint8`.

@@ -3,7 +3,7 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 import pytest
 
-import pdcast as pc
+import pdcast as pdc
 from pdcast.core import coerce_df, downcast, infer_dtype, type_cast_valid
 from tests.conftest import (
     boolean_mocks,
@@ -44,14 +44,14 @@ def test_smallest_viable_type_categorical(test_input, expected):
 
 def test_infer_schema():
     input_df, expected = dataframe_mock(1000)
-    output = pc.infer_schema(input_df)
+    output = pdc.infer_schema(input_df)
     assert len(output) == len(expected)
     assert dicts_equal(output, expected)
 
 
 def test_infer_schema_big_df():
     input_df, expected = dataframe_mock(50_000)
-    output = pc.infer_schema(input_df)
+    output = pdc.infer_schema(input_df)
     assert len(output) == len(expected)
     assert dicts_equal(output, expected)
 
@@ -68,9 +68,9 @@ def test_downcast_dataframe():
 def test_downcast_series():
     input_df, expected_schema = dataframe_mock(1000)
     for name, input_series in input_df.iteritems():
-        output_series, output_schema = pc.downcast(input_series, return_schema=True)
+        output_series, output_schema = pdc.downcast(input_series, return_schema=True)
         series_schema = {name: expected_schema[name]}
-        expected_series = pc.coerce_series(input_series, series_schema)
+        expected_series = pdc.coerce_series(input_series, series_schema)
         assert dicts_equal(output_schema, series_schema)
         assert series_equal(output_series, expected_series)  # type: ignore
 
@@ -78,14 +78,14 @@ def test_downcast_series():
 def test_downcast_bad_type():
     input_list = [1, 2, 3, 4, 5]
     with pytest.raises(TypeError):
-        pc.downcast(input_list)  # type: ignore
+        pdc.downcast(input_list)  # type: ignore
 
 
 def test_infer_schema_exclude():
     input_df, expected_schema = dataframe_mock(1000)
     include = [2, 4, 6]
     exclude = [x for x in range(input_df.shape[1]) if x not in include]
-    output_schema = pc.infer_schema(input_df, exclude=exclude)
+    output_schema = pdc.infer_schema(input_df, exclude=exclude)
     expected_schema = input_df.dtypes.to_dict()
     expected_schema.update({2: np.bool_, 4: np.bool_, 6: pd.Int8Dtype()})
     assert dicts_equal(expected_schema, output_schema)
@@ -94,7 +94,7 @@ def test_infer_schema_exclude():
 def test_infer_schema_include():
     input_df, expected_schema = dataframe_mock(1000)
     include = [2, 4, 6]
-    output_schema = pc.infer_schema(input_df, include=include)
+    output_schema = pdc.infer_schema(input_df, include=include)
     expected_schema = input_df.dtypes.to_dict()
     expected_schema.update({2: np.bool_, 4: np.bool_, 6: pd.Int8Dtype()})
     assert dicts_equal(expected_schema, output_schema)
@@ -104,7 +104,7 @@ def test_infer_schema_include():
 def test_infer_schema_series(series, expected_dtype):
     name = "series_name"
     series.name = name
-    output_schema = pc.infer_schema(series)
+    output_schema = pdc.infer_schema(series)
     expected_schema = {name: expected_dtype}
     assert dicts_equal(output_schema, expected_schema)
 
@@ -112,7 +112,7 @@ def test_infer_schema_series(series, expected_dtype):
 def test_infer_schema_bad_type():
     input_list = [1, 2, 3, 4, 5]
     with pytest.raises(TypeError):
-        pc.infer_schema(input_list)  # type: ignore
+        pdc.infer_schema(input_list)  # type: ignore
 
 
 def test_type_cast_valid():
