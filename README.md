@@ -1,6 +1,11 @@
 Pandas Downcast
 ===============
 
+[![image](https://img.shields.io/pypi/v/pandas-downcast.svg)](https://pypi.python.org/pypi/pandas-downcast)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/pandas-downcast.svg)](https://pypi.python.org/pypi/pandas-downcast/)
+[![Build Status](https://travis-ci.com/domvwt/pandas-downcast.svg?branch=main)](https://travis-ci.com/domvwt/pandas-downcast)
+[![codecov](https://codecov.io/gh/domvwt/pandas-downcast/branch/main/graph/badge.svg?token=TQPLURKQ9Z)](https://codecov.io/gh/domvwt/pandas-downcast)
+
 Safely infer minimum viable schema for Pandas `DataFrame` and `Series`.
 
 ## Installation
