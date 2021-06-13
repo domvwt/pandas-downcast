@@ -6,7 +6,9 @@ Pandas Downcast
 [![Build Status](https://travis-ci.com/domvwt/pandas-downcast.svg?branch=main)](https://travis-ci.com/domvwt/pandas-downcast)
 [![codecov](https://codecov.io/gh/domvwt/pandas-downcast/branch/main/graph/badge.svg?token=TQPLURKQ9Z)](https://codecov.io/gh/domvwt/pandas-downcast)
 
-Safely infer minimum viable schema for Pandas `DataFrame` and `Series`.
+Shrink [Pandas](https://pandas.pydata.org/) DataFrames with intelligent schema inference. 
+`pandas-downcast` finds the minimum viable type for each column, checking that resulting values
+are within tolerance of original values.
 
 ## Installation
 ```bash
