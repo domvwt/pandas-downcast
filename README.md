@@ -6,7 +6,7 @@ Pandas Downcast
 [![Build Status](https://travis-ci.com/domvwt/pandas-downcast.svg?branch=main)](https://travis-ci.com/domvwt/pandas-downcast)
 [![codecov](https://codecov.io/gh/domvwt/pandas-downcast/branch/main/graph/badge.svg?token=TQPLURKQ9Z)](https://codecov.io/gh/domvwt/pandas-downcast)
 
-Shrink [Pandas](https://pandas.pydata.org/) DataFrames with intelligent schema inference. 
+Shrink [Pandas](https://pandas.pydata.org/) DataFrames with precision safe schema inference. 
 `pandas-downcast` finds the minimum viable type for each column, ensuring that resulting values
 are within tolerance of original values.
 
@@ -26,7 +26,6 @@ pip install pandas-downcast
 ## Usage
 ```python
 import pdcast as pdc
-
 import numpy as np
 import pandas as pd
 
@@ -107,7 +106,7 @@ print(pdc.options.RTOL)
 # >>> 1e-05
 ```
 
-Tolerance can be set at module level or passed in function arguments:
+Tolerance can be set at module level or passed in function arguments.
 
 ```python
 pdc.options.ATOL = 1e-10
@@ -154,12 +153,12 @@ df_dict = {df: sns.load_dataset(df) for df in sns.get_dataset_names()}
 results = []
 
 for name, df in df_dict.items():
-    mem_usage_pre = df.memory_usage(deep=True).sum()
+    size_pre = df.memory_usage(deep=True).sum()
     df_post = pdc.downcast(df)
-    mem_usage_post = df_post.memory_usage(deep=True).sum()
-    shrinkage = int((1 - (mem_usage_post / mem_usage_pre)) * 100)
+    size_post = df_post.memory_usage(deep=True).sum()
+    shrinkage = int((1 - (size_post / size_pre)) * 100)
     results.append(
-        {"dataset": name, "size_pre": mem_usage_pre, "size_post": mem_usage_post, "shrink_pct": shrinkage}
+        {"dataset": name, "size_pre": size_pre, "size_post": size_post, "shrink_pct": shrinkage}
     )
 
 results_df = pd.DataFrame(results).sort_values("shrink_pct", ascending=False).reset_index(drop=True)

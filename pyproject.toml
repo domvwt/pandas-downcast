@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pandas-downcast"
-version = "0.1.0.post3"
-description = "Shrink Pandas DataFrames with intelligent schema inference."
+version = "1.0.0"
+description = "Shrink Pandas DataFrames with precision safe schema inference."
 authors = ["Dominic Thorn <dominic.thorn@gmail.com>"]
 license = "MIT"
 readme = "README.md"

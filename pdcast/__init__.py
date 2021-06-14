@@ -6,7 +6,6 @@ Safely infer minimum viable schema for Pandas DataFrames and Series.
 
 Examples:
     import pdcast as pdc
-
     import numpy as np
     import pandas as pd
 
@@ -26,11 +25,12 @@ Examples:
     schema = pdc.infer_schema(df)
 
     # Coerce DataFrame to schema - required if converting float to Pandas Integer.
-    df_new = pdc.coerce_df(df)
+    df_new = pdc.coerce_df(df, schema)
+
 """
 
 __author__ = """Dominic Thorn"""
 __email__ = "dominic.thorn@gmail.com"
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 from pdcast.core import coerce_df, coerce_series, downcast, infer_schema, options
