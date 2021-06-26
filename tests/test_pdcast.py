@@ -4,7 +4,7 @@ import pytest
 from pandas.core.frame import DataFrame
 
 import pdcast as pdc
-from pdcast.core import coerce_df, downcast, infer_dtype, type_cast_valid
+from pdcast.core import coerce_df, downcast, infer_dtype, type_cast_valid, take_head_and_tail
 from tests.conftest import (
     boolean_mocks,
     categorical_mocks,
@@ -120,3 +120,9 @@ def test_type_cast_valid():
     new_dtype = pd.Int8Dtype()
     result = type_cast_valid(input_series, new_dtype)
     assert not result
+
+
+def test_head_and_tail_bypass():
+    input_df, _ = dataframe_mock(1000)
+    output_df: DataFrame = take_head_and_tail(input_df)  # type: ignore
+    assert frames_equal(input_df, output_df)

@@ -254,7 +254,7 @@ def downcast(
     if isinstance(data, Series):
         dtype = schema[data.name]
         data = coerce_series(data, dtype)
-    elif isinstance(data, DataFrame):
+    else:  # DataFrame
         data = coerce_df(data, schema)
     if return_schema:
         return data, schema
