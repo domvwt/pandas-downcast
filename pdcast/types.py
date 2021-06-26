@@ -23,4 +23,4 @@ INT_NULLABLE_TYPES = [
     pd.Int64Dtype(),
 ]
 
-FLOAT_TYPES = [np.float16, np.float32, np.float64, np.float128]
+FLOAT_TYPES = [np.float16, np.float32, np.float64]
