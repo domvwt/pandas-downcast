@@ -6,9 +6,9 @@ from typing import Any, Dict, Hashable, Iterable, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from pandas._typing import FrameOrSeries
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
-from pandas._typing import FrameOrSeries
 
 import pdcast.types as tc
 
@@ -16,6 +16,7 @@ import pdcast.types as tc
 @dataclass
 class Options:
     """Config options for `pdcast`."""
+
     RTOL = 1e-05
     """Default relative tolerance for numpy inexact numeric comparison
     See: https://numpy.org/doc/stable/reference/generated/numpy.allclose.html"""
@@ -157,8 +158,7 @@ def infer_schema(
     if not isinstance(data, (DataFrame, Series)):
         raise TypeError(type(data))
     data = data.copy()
-    if not infer_dtype_kws:
-        infer_dtype_kws = {}
+    infer_dtype_kws = infer_dtype_kws or {}
     # Use head and tail in case data is sorted
     if sample_size and data.shape[0] > sample_size:
         data = take_head_and_tail(data)
