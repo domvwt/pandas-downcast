@@ -14,7 +14,6 @@ cqa: format isort lint mypy ## run all cqa tools
 
 test-all: ## run tests on every Python version with tox
 	tox --skip-missing-interpreters
-	python -m tests.check_package_version
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source pdcast -m pytest
