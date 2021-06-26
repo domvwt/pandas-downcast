@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from pandas.core.frame import DataFrame
 import pytest
+from pandas.core.frame import DataFrame
 
 import pdcast as pdc
 from pdcast.core import coerce_df, downcast, infer_dtype, type_cast_valid
@@ -119,4 +119,4 @@ def test_type_cast_valid():
     input_series = pd.Series([float(x * 1.2) for x in range(10)])
     new_dtype = pd.Int8Dtype()
     result = type_cast_valid(input_series, new_dtype)
-    assert result == False
+    assert not result

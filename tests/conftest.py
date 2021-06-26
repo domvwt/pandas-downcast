@@ -6,7 +6,7 @@ import pandas as pd
 from pandas import DataFrame, Series
 
 import pdcast.types as tc
-from pdcast import options 
+from pdcast import options
 
 RTOL = options.RTOL
 ATOL = options.ATOL
@@ -27,11 +27,11 @@ def boolean_mocks(length) -> List[Tuple[Series, Any]]:
         (
             pd.Series(np.random.choice([1, 0, None], length)).astype(float),
             pd.Int8Dtype(),
-        ),
+        ),  # type: ignore
         (
             pd.Series(np.random.choice([1 + 1e-12, 1e-12, None], length)).astype(float),
             pd.Int8Dtype(),
-        ),
+        ),  # type: ignore
     ]
 
 
@@ -134,6 +134,7 @@ def other_mocks(length):
         (pd.Series([np.complex_(x) for x in range(length)]), np.complex_)
     ]
 
+
 def series_mocks(length) -> List[Tuple[Series, Any]]:
     mocks: List[Tuple[Series, Any]] = [
         *boolean_mocks(length),
@@ -172,7 +173,9 @@ def frames_equal(
             return False
     return True
 
-def series_equal(a: Series, b: Series, rtol: float = None, atol: float = None
+
+def series_equal(
+    a: Series, b: Series, rtol: float = None, atol: float = None
 ) -> bool:
     rtol = rtol or RTOL
     atol = atol or ATOL
@@ -187,6 +190,7 @@ def series_equal(a: Series, b: Series, rtol: float = None, atol: float = None
         if not a.dropna().tolist() == b.dropna().tolist():
             return False
     return True
+
 
 def dicts_equal(d1: dict, d2: dict):
     if d1.keys() != d2.keys():
