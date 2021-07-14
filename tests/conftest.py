@@ -143,7 +143,8 @@ series_date_types = [
 def series_numpy_only(length):
     return [
         # Integer - Unsigned - Nullable
-        (pd.Series(np.where(rng.uniform(size=length) > 0.5, rng.integers(0, 255, length), None), dtype=float), np.float16),
+        (pd.Series(np.where(rng.uniform(size=length) > 0.5, rng.integers(0, 255, length), None), dtype=float), 
+        np.float16),
         # Categorical = Repeated
         (pd.Series(np.random.choice(["a", "b", "c", "d"], length)), np.object_),
     ]
