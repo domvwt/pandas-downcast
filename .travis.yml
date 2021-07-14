@@ -9,7 +9,7 @@ python:
   - 3.9
 
 install:
-  - pip install . pytest coverage
+  - poetry install
 
 script:
   - coverage run --append --source pdcast -m pytest
