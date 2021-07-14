@@ -24,14 +24,8 @@ def boolean_mocks(length) -> List[Tuple[Series, Any]]:
         (pd.Series(rng.integers(0, 1, length)), np.bool_),
         (pd.Series(np.random.choice([1 + 1e-12, 1e-12], length)), np.bool_),
         # Boolean - Nullable
-        (
-            pd.Series(np.random.choice([1, 0, None], length)).astype(float),
-            pd.Int8Dtype(),
-        ),  # type: ignore
-        (
-            pd.Series(np.random.choice([1 + 1e-12, 1e-12, None], length)).astype(float),
-            pd.Int8Dtype(),
-        ),  # type: ignore
+        (pd.Series(np.random.choice([1, 0, None], length)).astype(float), pd.Int8Dtype()),  # type: ignore
+        (pd.Series(np.random.choice([1 + 1e-12, 1e-12, None], length)).astype(float), pd.Int8Dtype()),  # type: ignore
     ]
 
 
@@ -57,13 +51,7 @@ def integer_mocks(length) -> List[Tuple[Series, Any]]:
         ],
         # Integer - Unsigned - Nullable
         *[
-            (
-                pd.Series(
-                    np.where(rng.uniform(size=length) > 0.5, x, None),
-                    dtype=pd.Int64Dtype(),
-                ),
-                y,
-            )
+            (pd.Series(np.where(rng.uniform(size=length) > 0.5, x, None), dtype=pd.Int64Dtype()), y)
             for x, y in zip(unsigned_ints, tc.UINT_NULLABLE_TYPES)
         ],
         # Integer - Signed
@@ -73,13 +61,7 @@ def integer_mocks(length) -> List[Tuple[Series, Any]]:
         ],
         # Integer - Signed - Nullable
         *[
-            (
-                pd.Series(
-                    np.where(rng.uniform(size=length) > 0.5, x, None),
-                    dtype=pd.Int64Dtype(),
-                ),
-                y,
-            )
+            (pd.Series(np.where(rng.uniform(size=length) > 0.5, x, None), dtype=pd.Int64Dtype()), y)
             for x, y in zip(signed_ints, tc.INT_NULLABLE_TYPES)
         ],
     ]
@@ -87,12 +69,8 @@ def integer_mocks(length) -> List[Tuple[Series, Any]]:
 
 def float_mocks(length) -> List[Tuple[Series, Any]]:
     floats = [
-        np.random.uniform(-65503.9, 65499.9, length)
-        .astype(np.float16)
-        .astype(np.float64),
-        np.random.uniform(-3.4028235e38, 3.4028235e38, length)
-        .astype(np.float32)
-        .astype(np.float64),
+        np.random.uniform(-65503.9, 65499.9, length).astype(np.float16).astype(np.float64),
+        np.random.uniform(-3.4028235e38, 3.4028235e38, length).astype(np.float32).astype(np.float64),
         np.random.uniform(-1.7976931348623157e200, 1.7976931348623157e200, length),
     ]
     return [
@@ -109,15 +87,9 @@ def categorical_mocks(length) -> List[Tuple[Series, Any]]:
     nearly_unique_2 = np.where(rng.uniform(size=length) > 0.7, "a", unique_ids)
     return [
         # Repeated
-        (
-            pd.Series(np.random.choice(["a", "b", "c", "d"], length)),
-            pd.CategoricalDtype(),
-        ),
+        (pd.Series(np.random.choice(["a", "b", "c", "d"], length)),pd.CategoricalDtype()),
         # Repeated - Nullable
-        (
-            pd.Series(np.random.choice(["a", "b", "c", None], length)),
-            pd.CategoricalDtype(),
-        ),
+        (pd.Series(np.random.choice(["a", "b", "c", None], length)), pd.CategoricalDtype()),
         # Unique
         (pd.Series(unique_ids), np.object_),
         # Unique - Nullable
@@ -159,6 +131,21 @@ def dataframe_mock(length) -> Tuple[DataFrame, dict]:
     df = pd.concat(input_series, axis=1)
     schema = {k: v for k, v in zip(df.columns, expected_types)}
     return df, schema  # type: ignore
+
+
+series_date_types = [
+    (pd.Series(pd.period_range("2021-01-01", "2021-12-31"))),
+    (pd.Series(pd.date_range("2021-01-01", "2021-12-31"))),
+    (pd.Series(pd.timedelta_range("1 Day", periods=365))),
+]
+
+def series_numpy_only(length): 
+    return [
+        # Integer - Unsigned - Nullable
+        (pd.Series(np.where(rng.uniform(size=length) > 0.5, rng.integers(0, 255, length), None), dtype=float), np.float16),
+        # Categorical = Repeated
+        (pd.Series(np.random.choice(["a", "b", "c", "d"], length)), np.object_),
+    ]
 
 
 def frames_equal(

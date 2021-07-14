@@ -21,6 +21,8 @@ from tests.conftest import (
     integer_mocks,
     series_equal,
     series_mocks,
+    series_date_types,
+    series_numpy_only
 )
 
 
@@ -134,11 +136,6 @@ def test_head_and_tail_bypass():
     assert frames_equal(input_df, output_df)
 
 
-series_date_types = [
-    (pd.Series(pd.period_range("2021-01-01", "2021-12-31"))),
-    (pd.Series(pd.date_range("2021-01-01", "2021-12-31"))),
-    (pd.Series(pd.timedelta_range("1 Day", periods=365))),
-]
 
 
 @pytest.mark.parametrize("input_srs", series_date_types)
@@ -146,3 +143,10 @@ def test_datetypes(input_srs):
     input_dtype = input_srs.dtype
     output_dtype = infer_dtype(input_srs)
     assert input_dtype == output_dtype
+
+
+
+@pytest.mark.parametrize("input_srs,expected", series_numpy_only(1000))
+def test_numpy_only(input_srs, expected):
+    output_dtype = infer_dtype(input_srs, numpy_dtypes_only=True)
+    assert output_dtype == expected

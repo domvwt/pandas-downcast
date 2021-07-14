@@ -108,7 +108,7 @@ def infer_dtype(
                         first_valid_type(series, tc.UINT_NULLABLE_TYPES)
 
                 # Not nullable
-                else:
+                elif not is_nullable:
                     if is_signed:
                         first_valid_type(series, tc.INT_TYPES)
                     # Unsigned

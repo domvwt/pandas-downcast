@@ -26,13 +26,3 @@ INT_NULLABLE_TYPES = (
 )
 
 FLOAT_TYPES = (np.float16, np.float32, np.float64)
-
-DATE_TYPES = (
-    dt.datetime,
-    dt.timedelta,
-    np.datetime64,
-    np.timedelta64,
-    pd.Timestamp,
-    pd.PeriodDtype,
-    pd.Timedelta,
-)
