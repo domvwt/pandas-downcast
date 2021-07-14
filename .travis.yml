@@ -9,7 +9,8 @@ python:
   - 3.9
 
 install:
-  - poetry install
+  - pip install -r requirements.txt
+  - pip install . pytest coverage pandas=
 
 script:
   - coverage run --append --source pdcast -m pytest
