@@ -9,8 +9,8 @@ python:
   - 3.9
 
 install:
-  - pip install -r requirements.txt
-  - pip install . pytest coverage pandas=
+  - pip install -r test-requirements.txt
+  - pip install . pytest coverage
 
 script:
   - coverage run --append --source pdcast -m pytest
