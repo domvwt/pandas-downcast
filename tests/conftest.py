@@ -19,9 +19,9 @@ def boolean_mocks(length) -> List[Tuple[Series, Any]]:
         # Null
         (pd.Series([None] * length), pd.Int8Dtype()),
         # Boolean
-        (pd.Series(np.zeros(length)), np.bool_),
-        (pd.Series(np.ones(length)), np.bool_),
-        (pd.Series(rng.integers(0, 1, length)), np.bool_),
+        # (pd.Series(np.zeros(length)), np.bool_),
+        # (pd.Series(np.ones(length)), np.bool_),
+        (pd.Series(rng.integers(0, 2, length)), np.bool_),
         (pd.Series(np.random.choice([1 + 1e-12, 1e-12], length)), np.bool_),
         # Boolean - Nullable
         (pd.Series(np.random.choice([1, 0, None], length)).astype(float), pd.Int8Dtype()),  # type: ignore
@@ -87,7 +87,7 @@ def categorical_mocks(length) -> List[Tuple[Series, Any]]:
     nearly_unique_2 = np.where(rng.uniform(size=length) > 0.7, "a", unique_ids)
     return [
         # Repeated
-        (pd.Series(np.random.choice(["a", "b", "c", "d"], length)),pd.CategoricalDtype()),
+        (pd.Series(np.random.choice(["a", "b", "c", "d"], length)), pd.CategoricalDtype()),
         # Repeated - Nullable
         (pd.Series(np.random.choice(["a", "b", "c", None], length)), pd.CategoricalDtype()),
         # Unique
@@ -139,7 +139,8 @@ series_date_types = [
     (pd.Series(pd.timedelta_range("1 Day", periods=365))),
 ]
 
-def series_numpy_only(length): 
+
+def series_numpy_only(length):
     return [
         # Integer - Unsigned - Nullable
         (pd.Series(np.where(rng.uniform(size=length) > 0.5, rng.integers(0, 255, length), None), dtype=float), np.float16),
@@ -185,5 +186,6 @@ def dicts_equal(d1: dict, d2: dict):
     for k1, v1 in d1.items():
         v2 = d2[k1]
         if v1 != v2:
+            print("oops")
             return False
     return True

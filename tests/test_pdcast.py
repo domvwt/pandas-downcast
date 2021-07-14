@@ -19,10 +19,10 @@ from tests.conftest import (
     float_mocks,
     frames_equal,
     integer_mocks,
+    series_date_types,
     series_equal,
     series_mocks,
-    series_date_types,
-    series_numpy_only
+    series_numpy_only,
 )
 
 
@@ -95,7 +95,7 @@ def test_infer_schema_exclude():
     exclude = [x for x in range(input_df.shape[1]) if x not in include]
     output_schema = pdc.infer_schema(input_df, exclude=exclude)
     expected_schema = input_df.dtypes.to_dict()
-    expected_schema.update({2: np.bool_, 4: np.bool_, 6: pd.Int8Dtype()})
+    expected_schema.update({2: np.bool_, 4: pd.Int8Dtype(), 6: np.uint16})
     assert dicts_equal(expected_schema, output_schema)
 
 
@@ -104,7 +104,7 @@ def test_infer_schema_include():
     include = [2, 4, 6]
     output_schema = pdc.infer_schema(input_df, include=include)
     expected_schema = input_df.dtypes.to_dict()
-    expected_schema.update({2: np.bool_, 4: np.bool_, 6: pd.Int8Dtype()})
+    expected_schema.update({2: np.bool_, 4: pd.Int8Dtype(), 6: np.uint16})
     assert dicts_equal(expected_schema, output_schema)
 
 
@@ -136,14 +136,11 @@ def test_head_and_tail_bypass():
     assert frames_equal(input_df, output_df)
 
 
-
-
 @pytest.mark.parametrize("input_srs", series_date_types)
 def test_datetypes(input_srs):
     input_dtype = input_srs.dtype
     output_dtype = infer_dtype(input_srs)
     assert input_dtype == output_dtype
-
 
 
 @pytest.mark.parametrize("input_srs,expected", series_numpy_only(1000))

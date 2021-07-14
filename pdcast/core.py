@@ -88,7 +88,7 @@ def infer_dtype(
                 if (
                     close_to_0_or_1(val_min, rtol, atol)
                     and close_to_0_or_1(val_max, rtol, atol)
-                    and series.dropna().unique().shape[0] <= 2
+                    and series.dropna().unique().shape[0] == 2
                 ):
                     # Convert values close to zero to exactly zero and values close to one to
                     # exactly one so that Pandas allows recast to int type
