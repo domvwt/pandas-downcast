@@ -25,6 +25,8 @@ class Options:
     """Default absolute tolerance for numpy inexact numeric comparison
     See: https://numpy.org/doc/stable/reference/generated/numpy.allclose.html"""
 
+    numpy_dtypes_only = False
+
 
 options = Options()
 
@@ -38,6 +40,7 @@ def infer_dtype(
     cat_thresh: float = 0.8,
     rtol: float = None,
     atol: float = None,
+    numpy_dtypes_only=None,
 ):
     """Determine smallest viable type for Pandas Series.
 
@@ -48,6 +51,7 @@ def infer_dtype(
             `cat_thresh` will be cast to Categorical type.
         rtol (float): Absolute tolerance for numeric equality. (Default value = None)
         atol (float): Relative tolerance for numeric equality. (Default value = None)
+        numpy_dtypes_only (bool): Use only Numpy dtypes for schema. (Default value = False)
 
     Returns:
         Smallest viable Numpy or Pandas data type for `series`.
@@ -56,6 +60,8 @@ def infer_dtype(
 
     original_dtype = series.dtype
     valid_type = None
+
+    numpy_dtypes_only = numpy_dtypes_only or options.numpy_dtypes_only
 
     def assign_valid_type(data_type):
         nonlocal valid_type
@@ -92,7 +98,7 @@ def infer_dtype(
 
                     first_valid_type(series, tc.BOOLEAN_TYPES)
 
-                if is_nullable:
+                if is_nullable and not numpy_dtypes_only:
                     if is_signed:
                         first_valid_type(series, tc.INT_NULLABLE_TYPES)
 
@@ -114,14 +120,15 @@ def infer_dtype(
         elif series.isna().all():
             assign_valid_type(tc.ALL_NAN_TYPE)
 
-        # Non-numeric
-        else:
-            unique_count = series.dropna().unique().shape[0]
-            srs_length = series.dropna().shape[0]
-            unique_pct = unique_count / srs_length
-            # Cast to `categorical` if percentage of uniques value less than threshold
-            if unique_pct < cat_thresh:
-                assign_valid_type(pd.CategoricalDtype())
+        # Non-numeric (and not a date)
+        elif original_dtype == object:
+            if not numpy_dtypes_only:
+                unique_count = series.dropna().unique().shape[0]
+                srs_length = series.dropna().shape[0]
+                unique_pct = unique_count / srs_length
+                # Cast to `categorical` if percentage of uniques value less than threshold
+                if unique_pct < cat_thresh:
+                    assign_valid_type(pd.CategoricalDtype())
             assign_valid_type(np.object_)
 
     except _ValidTypeFound:

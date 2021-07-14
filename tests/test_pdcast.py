@@ -4,7 +4,13 @@ import pytest
 from pandas.core.frame import DataFrame
 
 import pdcast as pdc
-from pdcast.core import coerce_df, downcast, infer_dtype, type_cast_valid, take_head_and_tail
+from pdcast.core import (
+    coerce_df,
+    downcast,
+    infer_dtype,
+    take_head_and_tail,
+    type_cast_valid,
+)
 from tests.conftest import (
     boolean_mocks,
     categorical_mocks,
@@ -126,3 +132,17 @@ def test_head_and_tail_bypass():
     input_df, _ = dataframe_mock(1000)
     output_df: DataFrame = take_head_and_tail(input_df)  # type: ignore
     assert frames_equal(input_df, output_df)
+
+
+series_date_types = [
+    (pd.Series(pd.period_range("2021-01-01", "2021-12-31"))),
+    (pd.Series(pd.date_range("2021-01-01", "2021-12-31"))),
+    (pd.Series(pd.timedelta_range("1 Day", periods=365))),
+]
+
+
+@pytest.mark.parametrize("input_srs", series_date_types)
+def test_datetypes(input_srs):
+    input_dtype = input_srs.dtype
+    output_dtype = infer_dtype(input_srs)
+    assert input_dtype == output_dtype
