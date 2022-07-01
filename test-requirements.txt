@@ -1,5 +1,5 @@
 dataclasses==0.8; python_version < "3.7"
-flake8==3.9.4
+flake8==3.9.0
 numpy==1.19.5
 pandas==1.1.5
 python-dateutil==2.8.1
