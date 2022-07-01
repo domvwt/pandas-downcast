@@ -2,7 +2,7 @@
 """Core functions for downcasting Pandas DataFrames and Series."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, Hashable, Iterable, Tuple, Type, Union, Optional
+from typing import Any, Dict, Hashable, Iterable, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -295,7 +295,10 @@ def take_head_and_tail(data: FrameOrSeries, sample_size: int = 10_000) -> FrameO
 
 
 def type_cast_valid(
-    series: Series, data_type: Any, rtol: Optional[float] = None, atol: Optional[float] = None
+    series: Series,
+    data_type: Any,
+    rtol: Optional[float] = None,
+    atol: Optional[float] = None,
 ) -> bool:
     """Check `series` can be cast to `data_type` without loss of information.
 
@@ -337,7 +340,10 @@ def is_numeric_typelike(dtype) -> bool:
 
 
 def close_to_val(
-    series: Series, val: Union[int, float], rtol: Optional[float] = None, atol: Optional[float] = None
+    series: Series,
+    val: Union[int, float],
+    rtol: Optional[float] = None,
+    atol: Optional[float] = None,
 ) -> Series:
     """Check all `series` values close to `val`.
 
@@ -359,7 +365,9 @@ def close_to_val(
         return pd.Series(series == val)
 
 
-def close_to_0_or_1(num: np.number, rtol: Optional[float] = None, atol: Optional[float] = None) -> bool:
+def close_to_0_or_1(
+    num: np.number, rtol: Optional[float] = None, atol: Optional[float] = None
+) -> bool:
     """Check if `num` is close to zero or one.
 
     Args:
@@ -373,6 +381,7 @@ def close_to_0_or_1(num: np.number, rtol: Optional[float] = None, atol: Optional
     """
     rtol = rtol or options.RTOL
     atol = atol or options.ATOL
-    return bool(np.isclose(num, 0, rtol=rtol, atol=atol) or np.isclose(
-        num, 1, rtol=rtol, atol=atol
-    ))
+    return bool(
+        np.isclose(num, 0, rtol=rtol, atol=atol)
+        or np.isclose(num, 1, rtol=rtol, atol=atol)
+    )
