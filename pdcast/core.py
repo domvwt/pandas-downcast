@@ -6,11 +6,11 @@ from typing import Any, Dict, Hashable, Iterable, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pandas._typing import FrameOrSeries
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
 import pdcast.types as tc
+from pdcast.types import FrameOrSeries
 
 
 @dataclass
@@ -51,7 +51,7 @@ def infer_dtype(
             `cat_thresh` will be cast to Categorical type.
         rtol (float): Absolute tolerance for numeric equality. (Default value = None)
         atol (float): Relative tolerance for numeric equality. (Default value = None)
-        numpy_dtypes_only (bool): Use only Numpy dtypes for schema. (Default value = False)
+        numpy_dtypes_only (bool): Use only Numpy dtypes for schema. (Default value = None)
 
     Returns:
         Smallest viable Numpy or Pandas data type for `series`.
@@ -146,6 +146,7 @@ def infer_schema(
     include: Iterable[Hashable] = None,
     exclude: Iterable[Hashable] = None,
     sample_size: int = 10_000,
+    numpy_dtypes_only=None,
     infer_dtype_kws: Dict[str, Any] = None,
 ) -> Dict[Any, Any]:
     """Infer minimum viable schema for `data`.
@@ -156,6 +157,7 @@ def infer_schema(
             Excludes all other columns if defined.
         exclude (Iterable[Hashable]): Columns to exclude. (Default value = None)
         sample_size (int): Number of records to take from head and tail. (Default value = 10_000)
+        numpy_dtypes_only (bool): Use only Numpy dtypes for schema. (Default value = None)
         infer_dtype_kws (Dict[Any, Any]): Keyword arguments for `infer_dtype`. (Default value = None)
 
     Returns:
@@ -170,14 +172,18 @@ def infer_schema(
     if sample_size and data.shape[0] > sample_size:
         data = take_head_and_tail(data)
     if isinstance(data, Series):
-        schema = {data.name: infer_dtype(data, **infer_dtype_kws)}
+        schema = {
+            data.name: infer_dtype(
+                data, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws
+            )
+        }
     else:  # DataFrame
         target_cols = include or data.columns
         if exclude:
             target_cols = [col for col in target_cols if col not in set(exclude)]
         schema = {
             col: (
-                infer_dtype(srs, **infer_dtype_kws)
+                infer_dtype(srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws)
                 if col in set(target_cols)
                 else srs.dtype
             )
@@ -232,6 +238,7 @@ def downcast(
     exclude: Iterable[Hashable] = None,
     return_schema: bool = False,
     sample_size: int = 10_000,
+    numpy_dtypes_only: bool = False,
     infer_dtype_kws: Dict[str, Any] = None,
 ) -> Union[DataFrame, Series, Tuple[FrameOrSeries, dict]]:
     """Infer and apply minimum viable schema.
@@ -243,6 +250,7 @@ def downcast(
         exclude (Iterable[Hashable]): Columns to exclude. (Default value = None)
         return_schema (bool): Return inferred schema if True. (Default value = False)
         sample_size (int): Number of records to take from head and tail. (Default value = 10_000)
+        numpy_dtypes_only (bool): Use only Numpy dtypes for schema. (Default value = None)
         infer_dtype_kws (Dict[str, Any]): Keyword arguments for `infer_dtype`. (Default value = None)
 
     Returns:
@@ -256,6 +264,7 @@ def downcast(
         include=include,
         exclude=exclude,
         sample_size=sample_size,
+        numpy_dtypes_only=numpy_dtypes_only,
         infer_dtype_kws=infer_dtype_kws,
     )
     if isinstance(data, Series):
@@ -281,7 +290,7 @@ def take_head_and_tail(data: FrameOrSeries, sample_size: int = 10_000) -> FrameO
     """
     if data.shape[0] > sample_size:
         half_sample = sample_size // 2
-        data = data[:half_sample].append(data[-half_sample:])
+        data = pd.concat([data[:half_sample], data[-half_sample:]], axis=0)
     return data
 
 

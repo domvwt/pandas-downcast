@@ -6,24 +6,28 @@ Pandas Downcast
 [![Build Status](https://travis-ci.com/domvwt/pandas-downcast.svg?branch=main)](https://travis-ci.com/domvwt/pandas-downcast)
 [![codecov](https://codecov.io/gh/domvwt/pandas-downcast/branch/main/graph/badge.svg?token=TQPLURKQ9Z)](https://codecov.io/gh/domvwt/pandas-downcast)
 
-Shrink [Pandas](https://pandas.pydata.org/) DataFrames with precision safe schema inference. 
+Shrink [Pandas](https://pandas.pydata.org/) DataFrames with precision safe schema inference.
 `pandas-downcast` finds the minimum viable type for each column, ensuring that resulting values
 are within tolerance of original values.
 
 ## Installation
+
 ```bash
 pip install pandas-downcast
 ```
 
 ## Dependencies
+
 * python >= 3.6
 * pandas
 * numpy
 
 ## License
+
 [MIT](https://opensource.org/licenses/MIT)
 
 ## Usage
+
 ```python
 import pdcast as pdc
 import numpy as np
@@ -41,14 +45,14 @@ df = pd.DataFrame(data)
 # Downcast DataFrame to minimum viable schema.
 df_downcast = pdc.downcast(df)
 
-# Infer minimum schema from DataFrame.
+# Infer minimum schema for DataFrame.
 schema = pdc.infer_schema(df)
 
 # Coerce DataFrame to schema - required if converting float to Pandas Integer.
 df_new = pdc.coerce_df(df, schema)
 ```
 
-Smaller data types == smaller memory footprint.
+Smaller data types -> smaller memory footprint.
 
 ```python
 df.info()
@@ -113,7 +117,9 @@ pdc.options.ATOL = 1e-10
 pdc.options.RTOL = 1e-10
 df_downcast_new = pdc.downcast(df)
 ```
+
 Or
+
 ```python
 infer_dtype_kws = {
     "ATOL": 1e-10,
@@ -122,7 +128,7 @@ infer_dtype_kws = {
 df_downcast_new = pdc.downcast(df, infer_dtype_kws=infer_dtype_kws)
 ```
 
-The `floats` column is now kept as `float64` to meet the tolerance requirement. 
+The `floats` column is now kept as `float64` to meet the tolerance requirement.
 Values in the `integers` column are still safely cast to `uint8`.
 
 ```python
@@ -140,7 +146,18 @@ df_downcast_new.info()
 # memory usage: 1.3 KB
 ```
 
+Inferred schemas can be restricted to Numpy data types only.
+
+```python
+# Downcast DataFrame to minimum viable Numpy schema.
+df_downcast = pdc.downcast(df, numpy_dtypes_only=True)
+
+# Infer minimum  Numpy schema for DataFrame.
+schema = pdc.infer_schema(df, numpy_dtypes_only=True)
+```
+
 ## Example
+
 The following example shows how downcasting data often leads to size reductions of **greater than 70%**, depending on the original types.
 
 ```python
@@ -164,6 +181,7 @@ for name, df in df_dict.items():
 results_df = pd.DataFrame(results).sort_values("shrink_pct", ascending=False).reset_index(drop=True)
 print(results_df)
 ```
+
 ```
            dataset  size_pre  size_post  shrink_pct
 0             fmri    213232      14776          93

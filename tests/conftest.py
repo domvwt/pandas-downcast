@@ -186,7 +186,7 @@ def dicts_equal(d1: dict, d2: dict):
         return False
     for k1, v1 in d1.items():
         v2 = d2[k1]
-        if v1 != v2:
-            print("oops")
+        if v1 != v2 and type(v1) != type(v2):
+            print(f"v1: {repr(v1)} v2: {repr(v2)}")
             return False
     return True
