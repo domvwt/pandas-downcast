@@ -1,9 +1,9 @@
-from typing import TypeVar
+from typing import Union
 
 import numpy as np
 import pandas as pd
 
-FrameOrSeries = TypeVar("FrameOrSeries", pd.DataFrame, pd.Series)
+FrameOrSeries = Union[pd.DataFrame, pd.Series]
 
 ALL_NAN_TYPE = pd.Int8Dtype()
 

@@ -2,7 +2,7 @@
 """Core functions for downcasting Pandas DataFrames and Series."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, Hashable, Iterable, Tuple, Union
+from typing import Any, Dict, Hashable, Iterable, Tuple, Type, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -38,10 +38,10 @@ class _ValidTypeFound(Exception):
 def infer_dtype(
     series: Series,
     cat_thresh: float = 0.8,
-    rtol: float = None,
-    atol: float = None,
-    numpy_dtypes_only=None,
-):
+    rtol: Optional[float] = None,
+    atol: Optional[float] = None,
+    numpy_dtypes_only: Optional[bool] = None,
+) -> Any:
     """Determine smallest viable type for Pandas Series.
 
     Args:
@@ -63,12 +63,12 @@ def infer_dtype(
 
     numpy_dtypes_only = numpy_dtypes_only or options.numpy_dtypes_only
 
-    def assign_valid_type(data_type):
+    def assign_valid_type(data_type) -> None:
         nonlocal valid_type
         valid_type = data_type
         raise _ValidTypeFound
 
-    def first_valid_type(srs, candidate_types):
+    def first_valid_type(srs, candidate_types) -> None:
         for data_type in candidate_types:
             if type_cast_valid(srs, data_type):
                 assign_valid_type(data_type)
@@ -143,11 +143,11 @@ def infer_dtype(
 
 def infer_schema(
     data: FrameOrSeries,
-    include: Iterable[Hashable] = None,
-    exclude: Iterable[Hashable] = None,
+    include: Optional[Iterable[Hashable]] = None,
+    exclude: Optional[Iterable[Hashable]] = None,
     sample_size: int = 10_000,
-    numpy_dtypes_only=None,
-    infer_dtype_kws: Dict[str, Any] = None,
+    numpy_dtypes_only: Optional[bool] = None,
+    infer_dtype_kws: Optional[Dict[str, Any]] = None,
 ) -> Dict[Any, Any]:
     """Infer minimum viable schema for `data`.
 
@@ -192,7 +192,7 @@ def infer_schema(
     return schema
 
 
-def coerce_df(df: DataFrame, schema: dict) -> FrameOrSeries:
+def coerce_df(df: DataFrame, schema: Dict[Hashable, Any]) -> FrameOrSeries:
     """Coerce DataFrame to `schema`.
 
     Args:
@@ -205,7 +205,7 @@ def coerce_df(df: DataFrame, schema: dict) -> FrameOrSeries:
     """
     df = df.copy()
     try:
-        df = df.astype(schema)  # type: ignore
+        df = df.astype(schema)
     except TypeError:
         for col, dtype in schema.items():
             df[col] = coerce_series(df[col], dtype)
@@ -225,22 +225,22 @@ def coerce_series(series: Series, dtype: Any) -> FrameOrSeries:
     """
     series = series.copy()
     try:
-        series = series.astype(dtype)  # type: ignore
+        series = series.astype(dtype)
     except TypeError:
         # TypeError thrown when converting float to int without rounding
-        series = series.round(0).astype(dtype)  # type: ignore
+        series = series.round(0).astype(dtype)
     return series
 
 
 def downcast(
     data: FrameOrSeries,
-    include: Iterable[Hashable] = None,
-    exclude: Iterable[Hashable] = None,
+    include: Optional[Iterable[Hashable]] = None,
+    exclude: Optional[Iterable[Hashable]] = None,
     return_schema: bool = False,
     sample_size: int = 10_000,
     numpy_dtypes_only: bool = False,
-    infer_dtype_kws: Dict[str, Any] = None,
-) -> Union[DataFrame, Series, Tuple[FrameOrSeries, dict]]:
+    infer_dtype_kws: Optional[Dict[str, Any]] = None,
+) -> Union[DataFrame, Series, Tuple[FrameOrSeries, Dict[Hashable, Any]]]:
     """Infer and apply minimum viable schema.
 
     Args:
@@ -278,7 +278,7 @@ def downcast(
 
 
 def take_head_and_tail(data: FrameOrSeries, sample_size: int = 10_000) -> FrameOrSeries:
-    """Take head and tail of DataFrame.
+    """Take head and tail of DataFrame or Series.
 
     Args:
         data (FrameOrSeries): Pandas DataFrame or Series.
@@ -290,12 +290,12 @@ def take_head_and_tail(data: FrameOrSeries, sample_size: int = 10_000) -> FrameO
     """
     if data.shape[0] > sample_size:
         half_sample = sample_size // 2
-        data = pd.concat([data[:half_sample], data[-half_sample:]], axis=0)
+        data = pd.concat([data[:half_sample], data[-half_sample:]])
     return data
 
 
 def type_cast_valid(
-    series: Series, data_type: Any, rtol: float = None, atol: float = None
+    series: Series, data_type: Any, rtol: Optional[float] = None, atol: Optional[float] = None
 ) -> bool:
     """Check `series` can be cast to `data_type` without loss of information.
 
@@ -318,7 +318,7 @@ def type_cast_valid(
     atol = atol or options.ATOL
     if is_numeric_typelike(sdtype) and is_numeric_typelike(data_type):
         return np.allclose(srs_new, series, equal_nan=True, rtol=rtol, atol=atol)
-    return Series(series == srs_new).all()
+    return bool(Series(series == srs_new).all())
 
 
 def is_numeric_typelike(dtype) -> bool:
@@ -337,7 +337,7 @@ def is_numeric_typelike(dtype) -> bool:
 
 
 def close_to_val(
-    series: Series, val: Union[int, float], rtol: float = None, atol: float = None
+    series: Series, val: Union[int, float], rtol: Optional[float] = None, atol: Optional[float] = None
 ) -> Series:
     """Check all `series` values close to `val`.
 
@@ -359,7 +359,7 @@ def close_to_val(
         return pd.Series(series == val)
 
 
-def close_to_0_or_1(num: np.number, rtol: float = None, atol: float = None) -> bool:
+def close_to_0_or_1(num: np.number, rtol: Optional[float] = None, atol: Optional[float] = None) -> bool:
     """Check if `num` is close to zero or one.
 
     Args:
@@ -373,6 +373,6 @@ def close_to_0_or_1(num: np.number, rtol: float = None, atol: float = None) -> b
     """
     rtol = rtol or options.RTOL
     atol = atol or options.ATOL
-    return np.isclose(num, 0, rtol=rtol, atol=atol) or np.isclose(
+    return bool(np.isclose(num, 0, rtol=rtol, atol=atol) or np.isclose(
         num, 1, rtol=rtol, atol=atol
-    )
+    ))
