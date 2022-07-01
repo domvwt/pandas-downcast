@@ -36,7 +36,6 @@ mypy = "^0.812"
 tox = "^3.23.0"
 flake8 = "^3.9.0"
 isort = "^5.8.0"
-pyment = "^0.3.3"
 pylint = "^2.8.3"
 
 [tool.isort]
