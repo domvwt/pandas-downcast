@@ -3,7 +3,7 @@ Pandas Downcast
 
 [![image](https://img.shields.io/pypi/v/pandas-downcast.svg)](https://pypi.python.org/pypi/pandas-downcast)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/pandas-downcast.svg)](https://pypi.python.org/pypi/pandas-downcast/)
-[![Build Status](https://travis-ci.com/domvwt/pandas-downcast.svg?branch=main)](https://travis-ci.com/domvwt/pandas-downcast)
+[![Build Status](https://github.com/domvwt/esparto/actions/workflows/lint-and-test.yml/badge.svg)](https://github.com/domvwt/pandas-downcast/actions/workflows/lint-and-test.yml)
 [![codecov](https://codecov.io/gh/domvwt/pandas-downcast/branch/main/graph/badge.svg?token=TQPLURKQ9Z)](https://codecov.io/gh/domvwt/pandas-downcast)
 
 Shrink [Pandas](https://pandas.pydata.org/) DataFrames with precision safe schema inference.
