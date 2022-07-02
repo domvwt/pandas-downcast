@@ -6,10 +6,12 @@ name: tests
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - "**.py"
   pull_request:
     branches: [ main, develop ]
-  paths:
-    - "**/*.py"
+    paths:
+      - "**.py"
 
 jobs:
   build:
