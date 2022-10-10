@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pandas-downcast"
-version = "1.2.1"
+version = "1.2.2"
 description = "Shrink Pandas DataFrames with precision safe schema inference."
 authors = ["Dominic Thorn <dominic.thorn@gmail.com>"]
 license = "MIT"
@@ -30,7 +30,7 @@ dataclasses = {version = "*", python = "<3.7"}
 typing-extensions = {version = "*", python = "<3.8"}
 
 [tool.poetry.dev-dependencies]
-black = ">=20.10"
+black = {version = ">=20.10", python = ">=3.6.2"}
 pytest = "^6.2.2"
 coverage = "^5.5"
 mypy = "^0.812"
@@ -39,6 +39,7 @@ flake8 = "^3.9.0"
 isort = "^5.8.0"
 pylint = "^2.8.3"
 pandas-stubs = {version = "^1.5.0", python = ">=3.8,<3.11"}
+importlib-metadata = "<5"
 
 [tool.isort]
 profile = "black"
