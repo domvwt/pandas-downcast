@@ -12,6 +12,10 @@ on:
     branches: [ main, develop ]
     paths:
       - "**.py"
+  workflow_dispatch:
+    branches: [ main ]
+    paths: 
+      - "**.py"
 
 jobs:
   build:
