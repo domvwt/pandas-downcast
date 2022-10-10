@@ -2,7 +2,7 @@
 """Core functions for downcasting Pandas DataFrames and Series."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, Hashable, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Hashable, Iterable, Optional, Tuple, Union, overload
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,14 @@ from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
 import pdcast.types as tc
-from pdcast.types import FrameOrSeries
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
+
+PANDAS_VERSION = tuple(int(x) for x in pd.__version__.split(".")[:2])
 
 
 @dataclass
@@ -32,7 +39,7 @@ options = Options()
 
 
 class _ValidTypeFound(Exception):
-    """ """
+    ...
 
 
 def infer_dtype(
@@ -45,13 +52,13 @@ def infer_dtype(
     """Determine smallest viable type for Pandas Series.
 
     Args:
-        series (Series): Pandas Series.
-        cat_thresh (float): Categorical value threshold. (Default value = 0.8)
+        series: Pandas Series.
+        cat_thresh: Categorical value threshold. (Default value = 0.8)
             Non-numeric variables with proportion of unique values less than
             `cat_thresh` will be cast to Categorical type.
-        rtol (float): Absolute tolerance for numeric equality. (Default value = None)
-        atol (float): Relative tolerance for numeric equality. (Default value = None)
-        numpy_dtypes_only (bool): Use only Numpy dtypes for schema. (Default value = None)
+        rtol: Absolute tolerance for numeric equality. (Default value = None)
+        atol: Relative tolerance for numeric equality. (Default value = None)
+        numpy_dtypes_only: Use only Numpy dtypes for schema. (Default value = None)
 
     Returns:
         Smallest viable Numpy or Pandas data type for `series`.
@@ -126,7 +133,7 @@ def infer_dtype(
                 unique_count = series.dropna().unique().shape[0]
                 srs_length = series.dropna().shape[0]
                 unique_pct = unique_count / srs_length
-                # Cast to `categorical` if percentage of uniques value less than threshold
+                # Cast to `categorical` if percentage of unique values less than threshold
                 if unique_pct < cat_thresh:
                     assign_valid_type(pd.CategoricalDtype())
             assign_valid_type(np.object_)
@@ -142,7 +149,7 @@ def infer_dtype(
 
 
 def infer_schema(
-    data: FrameOrSeries,
+    data: Union[DataFrame, Series],
     include: Optional[Iterable[Hashable]] = None,
     exclude: Optional[Iterable[Hashable]] = None,
     sample_size: int = 10_000,
@@ -152,16 +159,16 @@ def infer_schema(
     """Infer minimum viable schema for `data`.
 
     Args:
-        data (FrameOrSeries): Pandas DataFrame or Series.
-        include (Iterable[Hashable]): Columns to include. (Default value = None)
+        data: Pandas DataFrame or Series.
+        include: Columns to include. (Default value = None)
             Excludes all other columns if defined.
-        exclude (Iterable[Hashable]): Columns to exclude. (Default value = None)
-        sample_size (int): Number of records to take from head and tail. (Default value = 10_000)
-        numpy_dtypes_only (bool): Use only Numpy dtypes for schema. (Default value = None)
-        infer_dtype_kws (Dict[Any, Any]): Keyword arguments for `infer_dtype`. (Default value = None)
+        exclude: Columns to exclude. (Default value = None)
+        sample_size: Number of records to take from head and tail. (Default value = 10_000)
+        numpy_dtypes_only: Use only Numpy dtypes for schema. (Default value = None)
+        infer_dtype_kws: Keyword arguments for `infer_dtype`. (Default value = None)
 
     Returns:
-        Dict[str, Any]: Inferred schema.
+        Inferred schema.
 
     """
     if not isinstance(data, (DataFrame, Series)):
@@ -181,38 +188,52 @@ def infer_schema(
         target_cols = include or data.columns
         if exclude:
             target_cols = [col for col in target_cols if col not in set(exclude)]
-        schema = {
-            col: (
-                infer_dtype(srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws)
-                if col in set(target_cols)
-                else srs.dtype
-            )
-            for col, srs in data.iteritems()
-        }
+        if PANDAS_VERSION < (1, 5):
+            schema = {
+                col: (
+                    infer_dtype(
+                        srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws
+                    )
+                    if col in set(target_cols)
+                    else srs.dtype
+                )
+                for col, srs in data.iteritems()
+            }
+        else:
+            schema = {
+                col: (
+                    infer_dtype(
+                        srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws
+                    )
+                    if col in set(target_cols)
+                    else srs.dtype
+                )
+                for col, srs in data.items()
+            }
     return schema
 
 
-def coerce_df(df: DataFrame, schema: Dict[Hashable, Any]) -> FrameOrSeries:
+def coerce_df(df: DataFrame, schema: Dict[Hashable, Any]) -> DataFrame:
     """Coerce DataFrame to `schema`.
 
     Args:
-        df (DataFrame): Pandas DataFrame.
-        schema (dict): Target schema.
+        df: Pandas DataFrame.
+        schema: Target schema.
 
     Returns:
-        DataFrame: Pandas DataFrame with `schema`.
+        Pandas DataFrame with `schema`.
 
     """
     df = df.copy()
     try:
-        df = df.astype(schema)
+        df = df.astype(schema)  # type: ignore
     except TypeError:
         for col, dtype in schema.items():
-            df[col] = coerce_series(df[col], dtype)
+            df[col] = coerce_series(Series(df.loc[:, col]), dtype)
     return df
 
 
-def coerce_series(series: Series, dtype: Any) -> FrameOrSeries:
+def coerce_series(series: Series, dtype: Any) -> Series:
     """Coerce Series to `dtype`.
 
     Args:
@@ -232,30 +253,82 @@ def coerce_series(series: Series, dtype: Any) -> FrameOrSeries:
     return series
 
 
+@overload
 def downcast(
-    data: FrameOrSeries,
+    data: DataFrame,
+    include: Optional[Iterable[Hashable]],
+    exclude: Optional[Iterable[Hashable]],
+    return_schema: Literal[False],
+    sample_size: int,
+    numpy_dtypes_only: bool,
+    infer_dtype_kws: Optional[Dict[str, Any]],
+) -> DataFrame:
+    ...
+
+
+@overload
+def downcast(
+    data: DataFrame,
+    include: Optional[Iterable[Hashable]],
+    exclude: Optional[Iterable[Hashable]],
+    return_schema: Literal[True],
+    sample_size: int,
+    numpy_dtypes_only: bool,
+    infer_dtype_kws: Optional[Dict[str, Any]],
+) -> Tuple[DataFrame, Dict[Hashable, Any]]:
+    ...
+
+
+@overload
+def downcast(
+    data: Series,
+    include: Optional[Iterable[Hashable]],
+    exclude: Optional[Iterable[Hashable]],
+    return_schema: Literal[True],
+    sample_size: int,
+    numpy_dtypes_only: bool,
+    infer_dtype_kws: Optional[Dict[str, Any]],
+) -> Tuple[Series, Dict[Hashable, Any]]:
+    ...
+
+
+@overload
+def downcast(
+    data: Series,
+    include: Optional[Iterable[Hashable]],
+    exclude: Optional[Iterable[Hashable]],
+    return_schema: Literal[False],
+    sample_size: int,
+    numpy_dtypes_only: bool,
+    infer_dtype_kws: Optional[Dict[str, Any]],
+) -> Series:
+    ...
+
+
+def downcast(
+    data: Union[DataFrame, Series],
     include: Optional[Iterable[Hashable]] = None,
     exclude: Optional[Iterable[Hashable]] = None,
     return_schema: bool = False,
     sample_size: int = 10_000,
     numpy_dtypes_only: bool = False,
     infer_dtype_kws: Optional[Dict[str, Any]] = None,
-) -> Union[DataFrame, Series, Tuple[FrameOrSeries, Dict[Hashable, Any]]]:
+) -> Union[DataFrame, Series, Tuple[Union[DataFrame, Series], Dict[Hashable, Any]]]:
     """Infer and apply minimum viable schema.
 
     Args:
-        data (FrameOrSeries):
-        include (Iterable[Hashable]): Columns to include. (Default value = None)
+        data: Pandas DataFrame or Series to downcast.
+        include: Columns to include. (Default value = None)
             Excludes all other columns if defined.
-        exclude (Iterable[Hashable]): Columns to exclude. (Default value = None)
-        return_schema (bool): Return inferred schema if True. (Default value = False)
-        sample_size (int): Number of records to take from head and tail. (Default value = 10_000)
-        numpy_dtypes_only (bool): Use only Numpy dtypes for schema. (Default value = None)
-        infer_dtype_kws (Dict[str, Any]): Keyword arguments for `infer_dtype`. (Default value = None)
+        exclude: Columns to exclude. (Default value = None)
+        return_schema: Return inferred schema if True. (Default value = False)
+        sample_size: Number of records to take from head and tail. (Default value = 10_000)
+        numpy_dtypes_only: Use only Numpy dtypes for schema. (Default value = None)
+        infer_dtype_kws: Keyword arguments for `infer_dtype`. (Default value = None)
 
     Returns:
-        FrameOrSeries: Downcast Pandas DataFrame or Series.
-        Dict[Any, Any]: Inferred schema. (if `return_schema` is True)
+        Downcast Pandas DataFrame or Series.
+        Inferred schema. (if `return_schema` is True)
 
     """
     data = data.copy()
@@ -270,27 +343,39 @@ def downcast(
     if isinstance(data, Series):
         dtype = schema[data.name]
         data = coerce_series(data, dtype)
-    else:  # DataFrame
+    elif isinstance(data, DataFrame):  # DataFrame
         data = coerce_df(data, schema)
     if return_schema:
         return data, schema
     return data
 
 
-def take_head_and_tail(data: FrameOrSeries, sample_size: int = 10_000) -> FrameOrSeries:
+@overload
+def take_head_and_tail(data: Series, sample_size: int = 10_000) -> Series:
+    ...
+
+
+@overload
+def take_head_and_tail(data: DataFrame, sample_size: int = 10_000) -> DataFrame:
+    ...
+
+
+def take_head_and_tail(
+    data: Union[DataFrame, Series], sample_size: int = 10_000
+) -> Union[DataFrame, Series]:
     """Take head and tail of DataFrame or Series.
 
     Args:
-        data (FrameOrSeries): Pandas DataFrame or Series.
-        sample_size (int): Number of records to take. (Default value = 10_000)
+        data: Pandas DataFrame or Series.
+        sample_size: Number of records to take. (Default value = 10_000)
 
     Returns:
-        FrameOrSeries: Resampled `data`.
+        Resampled `data`.
 
     """
     if data.shape[0] > sample_size:
         half_sample = sample_size // 2
-        data = pd.concat([data[:half_sample], data[-half_sample:]])
+        data = pd.concat([data.iloc[:half_sample], data.iloc[-half_sample:]])
     return data
 
 
@@ -303,13 +388,13 @@ def type_cast_valid(
     """Check `series` can be cast to `data_type` without loss of information.
 
     Args:
-        series (Series): Pandas Series.
-        data_type (Any): Any data type.
-        rtol (float): Absolute tolerance for numeric equality. (Default value = None)
-        atol (float): Relative tolerance for numeric equality. (Default value = None)
+        series: Pandas Series.
+        data_type: Any data type.
+        rtol: Absolute tolerance for numeric equality. (Default value = None)
+        atol: Relative tolerance for numeric equality. (Default value = None)
 
     Returns:
-        bool: True if type if valid, False otherwise.
+        True if type if valid, False otherwise.
 
     """
     try:
@@ -331,7 +416,7 @@ def is_numeric_typelike(dtype) -> bool:
         dtype: Any data type class or object.
 
     Returns:
-        bool: True if numeric type, False otherwise.
+        True if numeric type, False otherwise.
 
     """
     return (isinstance(dtype, type) and issubclass(dtype, np.number)) or (
@@ -348,13 +433,13 @@ def close_to_val(
     """Check all `series` values close to `val`.
 
     Args:
-        series (Series): Pandas Series.
-        val (Union[int, float]): Value for comparison.
-        rtol (float): Absolute tolerance for numeric equality. (Default value = None)
-        atol (float): Relative tolerance for numeric equality. (Default value = None)
+        series: Pandas Series.
+        val: Value for comparison.
+        rtol: Absolute tolerance for numeric equality. (Default value = None)
+        atol: Relative tolerance for numeric equality. (Default value = None)
 
     Returns:
-        bool: True if all close to `val`, False otherwise.
+        True if all close to `val`, False otherwise.
 
     """
     rtol = rtol or options.RTOL
@@ -371,12 +456,12 @@ def close_to_0_or_1(
     """Check if `num` is close to zero or one.
 
     Args:
-        num (np.number): Number for comparison.
-        rtol (float): Absolute tolerance for numeric equality. (Default value = None)
-        atol (float): Relative tolerance for numeric equality. (Default value = None)
+        num: Number for comparison.
+        rtol: Absolute tolerance for numeric equality. (Default value = None)
+        atol: Relative tolerance for numeric equality. (Default value = None)
 
     Returns:
-        bool: True if all close to 0 or 1, False otherwise.
+        True if all close to 0 or 1, False otherwise.
 
     """
     rtol = rtol or options.RTOL

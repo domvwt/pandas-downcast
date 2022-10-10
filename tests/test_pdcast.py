@@ -2,11 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.core.frame import DataFrame
+from pandas.core.series import Series
 
 import pdcast as pdc
 from pdcast.core import (
-    coerce_df,
-    downcast,
     infer_dtype,
     take_head_and_tail,
     type_cast_valid,
@@ -66,8 +65,8 @@ def test_infer_schema_big_df():
 
 def test_downcast_dataframe():
     input_df, expected_schema = dataframe_mock(1000)
-    expected_df = coerce_df(input_df, expected_schema)
-    output_df: DataFrame = downcast(input_df, return_schema=False)  # type: ignore
+    expected_df = pdc.coerce_df(input_df, expected_schema)
+    output_df: DataFrame = pdc.downcast(input_df, return_schema=False)  # type: ignore
     output_schema = output_df.dtypes.to_dict()
     assert frames_equal(output_df, expected_df)  # type: ignore
     assert dicts_equal(output_schema, expected_schema)
@@ -75,6 +74,7 @@ def test_downcast_dataframe():
 
 def test_downcast_series():
     input_df, expected_schema = dataframe_mock(1000)
+    input_series: Series
     for name, input_series in input_df.iteritems():
         output_series, output_schema = pdc.downcast(input_series, return_schema=True)
         series_schema = {name: expected_schema[name]}
