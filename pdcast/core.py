@@ -2,17 +2,7 @@
 """Core functions for downcasting Pandas DataFrames and Series."""
 
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Dict,
-    Hashable,
-    Iterable,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-    overload,
-)
+from typing import Any, Dict, Hashable, Iterable, Optional, Tuple, Union, overload
 
 import numpy as np
 import pandas as pd
@@ -25,6 +15,10 @@ try:
     from typing import Literal
 except ImportError:
     from typing_extensions import Literal
+
+
+PANDAS_VERSION = tuple(int(x) for x in pd.__version__.split(".")[:2])
+
 
 @dataclass
 class Options:
@@ -139,7 +133,7 @@ def infer_dtype(
                 unique_count = series.dropna().unique().shape[0]
                 srs_length = series.dropna().shape[0]
                 unique_pct = unique_count / srs_length
-                # Cast to `categorical` if percentage of uniques value less than threshold
+                # Cast to `categorical` if percentage of unique values less than threshold
                 if unique_pct < cat_thresh:
                     assign_valid_type(pd.CategoricalDtype())
             assign_valid_type(np.object_)
@@ -194,14 +188,28 @@ def infer_schema(
         target_cols = include or data.columns
         if exclude:
             target_cols = [col for col in target_cols if col not in set(exclude)]
-        schema = {
-            col: (
-                infer_dtype(srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws)
-                if col in set(target_cols)
-                else srs.dtype
-            )
-            for col, srs in data.iteritems()
-        }
+        if PANDAS_VERSION < (1, 5):
+            schema = {
+                col: (
+                    infer_dtype(
+                        srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws
+                    )
+                    if col in set(target_cols)
+                    else srs.dtype
+                )
+                for col, srs in data.iteritems()
+            }
+        else:
+            schema = {
+                col: (
+                    infer_dtype(
+                        srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws
+                    )
+                    if col in set(target_cols)
+                    else srs.dtype
+                )
+                for col, srs in data.items()
+            }
     return schema
 
 
@@ -218,10 +226,10 @@ def coerce_df(df: DataFrame, schema: Dict[Hashable, Any]) -> DataFrame:
     """
     df = df.copy()
     try:
-        df = df.astype(schema)
+        df = df.astype(schema)  # type: ignore
     except TypeError:
         for col, dtype in schema.items():
-            df[col] = coerce_series(df[col], dtype)
+            df[col] = coerce_series(Series(df.loc[:, col]), dtype)
     return df
 
 
