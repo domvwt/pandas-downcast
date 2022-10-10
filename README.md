@@ -152,7 +152,7 @@ Inferred schemas can be restricted to Numpy data types only.
 # Downcast DataFrame to minimum viable Numpy schema.
 df_downcast = pdc.downcast(df, numpy_dtypes_only=True)
 
-# Infer minimum  Numpy schema for DataFrame.
+# Infer minimum Numpy schema for DataFrame.
 schema = pdc.infer_schema(df, numpy_dtypes_only=True)
 ```
 
