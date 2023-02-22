@@ -14,7 +14,9 @@ import pdcast.types as tc
 try:
     from typing import Literal, TypeVar
 except ImportError:
-    from typing_extensions import Literal, TypeVar  # type: ignore
+    from typing import TypeVar  # type: ignore
+
+    from typing_extensions import Literal  # type: ignore
 
 
 PANDAS_VERSION = tuple(int(x) for x in pd.__version__.split(".")[:2])
@@ -257,7 +259,7 @@ def coerce_series(series: Series, dtype: Any) -> Series:
 
 
 @overload
-def downcast(
+def downcast(  # type: ignore
     data: T,
     include: Optional[Iterable[Hashable]] = None,
     exclude: Optional[Iterable[Hashable]] = None,
