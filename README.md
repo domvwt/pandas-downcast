@@ -52,7 +52,7 @@ schema = pdc.infer_schema(df)
 df_new = pdc.coerce_df(df, schema)
 ```
 
-Smaller data types -> smaller memory footprint.
+Smaller data types $\Rightarrow$ smaller memory footprint.
 
 ```python
 df.info()
@@ -110,7 +110,7 @@ print(pdc.options.RTOL)
 # >>> 1e-05
 ```
 
-Tolerance can be set at module level or passed in function arguments.
+Tolerance can be set at the module level or passed in function arguments.
 
 ```python
 pdc.options.ATOL = 1e-10
