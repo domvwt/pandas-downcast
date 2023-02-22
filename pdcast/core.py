@@ -12,12 +12,15 @@ from pandas.core.series import Series
 import pdcast.types as tc
 
 try:
-    from typing import Literal
+    from typing import Literal, TypeVar
 except ImportError:
-    from typing_extensions import Literal  # type: ignore
+    from typing_extensions import Literal, TypeVar  # type: ignore
 
 
 PANDAS_VERSION = tuple(int(x) for x in pd.__version__.split(".")[:2])
+
+
+T = TypeVar("T", DataFrame, Series)
 
 
 @dataclass
@@ -149,7 +152,7 @@ def infer_dtype(
 
 
 def infer_schema(
-    data: Union[DataFrame, Series],
+    data: T,
     include: Optional[Iterable[Hashable]] = None,
     exclude: Optional[Iterable[Hashable]] = None,
     sample_size: Optional[int] = None,
@@ -177,7 +180,7 @@ def infer_schema(
     infer_dtype_kws = infer_dtype_kws or {}
     # Use head and tail in case data is sorted
     if sample_size and data.shape[0] > sample_size:
-        data = take_head_and_tail(data)
+        data = take_head_and_tail(data)  # type: ignore
     if isinstance(data, Series):
         schema = {
             data.name: infer_dtype(
@@ -255,65 +258,39 @@ def coerce_series(series: Series, dtype: Any) -> Series:
 
 @overload
 def downcast(
-    data: DataFrame,
-    include: Optional[Iterable[Hashable]],
-    exclude: Optional[Iterable[Hashable]],
-    return_schema: Literal[False],
-    sample_size: int,
-    numpy_dtypes_only: bool,
-    infer_dtype_kws: Optional[Dict[str, Any]],
-) -> DataFrame:
+    data: T,
+    include: Optional[Iterable[Hashable]] = None,
+    exclude: Optional[Iterable[Hashable]] = None,
+    return_schema: Literal[False] = False,
+    sample_size: Optional[int] = None,
+    numpy_dtypes_only: bool = False,
+    infer_dtype_kws: Optional[Dict[str, Any]] = None,
+) -> T:
     ...
 
 
 @overload
 def downcast(
-    data: DataFrame,
-    include: Optional[Iterable[Hashable]],
-    exclude: Optional[Iterable[Hashable]],
-    return_schema: Literal[True],
-    sample_size: int,
-    numpy_dtypes_only: bool,
-    infer_dtype_kws: Optional[Dict[str, Any]],
-) -> Tuple[DataFrame, Dict[Hashable, Any]]:
-    ...
-
-
-@overload
-def downcast(
-    data: Series,
-    include: Optional[Iterable[Hashable]],
-    exclude: Optional[Iterable[Hashable]],
-    return_schema: Literal[True],
-    sample_size: int,
-    numpy_dtypes_only: bool,
-    infer_dtype_kws: Optional[Dict[str, Any]],
-) -> Tuple[Series, Dict[Hashable, Any]]:
-    ...
-
-
-@overload
-def downcast(
-    data: Series,
-    include: Optional[Iterable[Hashable]],
-    exclude: Optional[Iterable[Hashable]],
-    return_schema: Literal[False],
-    sample_size: int,
-    numpy_dtypes_only: bool,
-    infer_dtype_kws: Optional[Dict[str, Any]],
-) -> Series:
+    data: T,
+    include: Optional[Iterable[Hashable]] = None,
+    exclude: Optional[Iterable[Hashable]] = None,
+    return_schema: Literal[True] = True,
+    sample_size: Optional[int] = None,
+    numpy_dtypes_only: bool = False,
+    infer_dtype_kws: Optional[Dict[str, Any]] = None,
+) -> Tuple[T, Dict[Hashable, Any]]:
     ...
 
 
 def downcast(
-    data: Union[DataFrame, Series],
+    data: T,
     include: Optional[Iterable[Hashable]] = None,
     exclude: Optional[Iterable[Hashable]] = None,
     return_schema: bool = False,
-    sample_size: int = 10_000,
+    sample_size: Optional[int] = 10_000,
     numpy_dtypes_only: bool = False,
     infer_dtype_kws: Optional[Dict[str, Any]] = None,
-) -> Union[DataFrame, Series, Tuple[Union[DataFrame, Series], Dict[Hashable, Any]]]:
+) -> Union[T, Tuple[T, Dict[Hashable, Any]]]:
     """Infer and apply minimum viable schema.
 
     Args:
@@ -350,19 +327,7 @@ def downcast(
     return data
 
 
-@overload
-def take_head_and_tail(data: Series, sample_size: int = 10_000) -> Series:
-    ...
-
-
-@overload
-def take_head_and_tail(data: DataFrame, sample_size: int = 10_000) -> DataFrame:
-    ...
-
-
-def take_head_and_tail(
-    data: Union[DataFrame, Series], sample_size: int = 10_000
-) -> Union[DataFrame, Series]:
+def take_head_and_tail(data: T, sample_size: int = 10_000) -> T:
     """Take head and tail of DataFrame or Series.
 
     Args:
@@ -373,9 +338,10 @@ def take_head_and_tail(
         Resampled `data`.
 
     """
-    if data.shape[0] > sample_size:
+    rows = data.shape[0]
+    if rows > sample_size:
         half_sample = sample_size // 2
-        data = pd.concat([data.iloc[:half_sample], data.iloc[-half_sample:]])
+        data = pd.concat([data.iloc[:half_sample], data.iloc[-half_sample:]])  # type: ignore
     return data
 
 
