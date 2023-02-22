@@ -152,7 +152,7 @@ def infer_schema(
     data: Union[DataFrame, Series],
     include: Optional[Iterable[Hashable]] = None,
     exclude: Optional[Iterable[Hashable]] = None,
-    sample_size: int = 10_000,
+    sample_size: Optional[int] = None,
     numpy_dtypes_only: Optional[bool] = None,
     infer_dtype_kws: Optional[Dict[str, Any]] = None,
 ) -> Dict[Any, Any]:
@@ -163,7 +163,7 @@ def infer_schema(
         include: Columns to include. (Default value = None)
             Excludes all other columns if defined.
         exclude: Columns to exclude. (Default value = None)
-        sample_size: Number of records to take from head and tail. (Default value = 10_000)
+        sample_size: Number of records to take from head and tail. (Default value = None)
         numpy_dtypes_only: Use only Numpy dtypes for schema. (Default value = None)
         infer_dtype_kws: Keyword arguments for `infer_dtype`. (Default value = None)
 
@@ -394,7 +394,7 @@ def type_cast_valid(
         atol: Relative tolerance for numeric equality. (Default value = None)
 
     Returns:
-        True if type if valid, False otherwise.
+        True if type is valid, False otherwise.
 
     """
     try:
