@@ -14,7 +14,7 @@ import pdcast.types as tc
 try:
     from typing import Literal
 except ImportError:
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # type: ignore
 
 
 PANDAS_VERSION = tuple(int(x) for x in pd.__version__.split(".")[:2])
@@ -87,7 +87,7 @@ def infer_dtype(
             is_signed = val_range[0] < 0
             is_nullable = series.isna().any()
 
-            srs_mod_one = np.mod(series.fillna(0), 1)
+            srs_mod_one = np.mod(series.fillna(0), 1)  # type: ignore
             is_decimal = not all(close_to_val(srs_mod_one, 0))
 
             if not is_decimal:
@@ -185,7 +185,7 @@ def infer_schema(
             )
         }
     else:  # DataFrame
-        target_cols = include or data.columns
+        target_cols: Iterable[Hashable] = include or data.columns  # type: ignore
         if exclude:
             target_cols = [col for col in target_cols if col not in set(exclude)]
         if PANDAS_VERSION < (1, 5):
@@ -197,16 +197,16 @@ def infer_schema(
                     if col in set(target_cols)
                     else srs.dtype
                 )
-                for col, srs in data.iteritems()
+                for col, srs in data.iteritems()  # type: ignore
             }
         else:
             schema = {
                 col: (
                     infer_dtype(
-                        srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws
+                        srs, numpy_dtypes_only=numpy_dtypes_only, **infer_dtype_kws  # type: ignore
                     )
                     if col in set(target_cols)
-                    else srs.dtype
+                    else srs.dtype  # type: ignore
                 )
                 for col, srs in data.items()
             }
@@ -229,7 +229,7 @@ def coerce_df(df: DataFrame, schema: Dict[Hashable, Any]) -> DataFrame:
         df = df.astype(schema)  # type: ignore
     except TypeError:
         for col, dtype in schema.items():
-            df[col] = coerce_series(Series(df.loc[:, col]), dtype)
+            df[col] = coerce_series(Series(df.loc[:, col]), dtype)  # type: ignore
     return df
 
 
