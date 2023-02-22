@@ -5,11 +5,7 @@ from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
 import pdcast as pdc
-from pdcast.core import (
-    infer_dtype,
-    take_head_and_tail,
-    type_cast_valid,
-)
+from pdcast.core import infer_dtype, take_head_and_tail, type_cast_valid
 from tests.conftest import (
     boolean_mocks,
     categorical_mocks,
