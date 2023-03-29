@@ -102,9 +102,7 @@ def categorical_mocks(length) -> List[Tuple[Series, Any]]:
 
 
 def other_mocks(length):
-    return [
-        (pd.Series([np.complex_(x) for x in range(length)]), np.complex_)
-    ]
+    return [(pd.Series([np.complex_(x) for x in range(length)]), np.complex_)]
 
 
 def series_mocks(length) -> List[Tuple[Series, Any]]:
@@ -163,9 +161,7 @@ def frames_equal(
     return True
 
 
-def series_equal(
-    a: Series, b: Series, rtol: float = None, atol: float = None
-) -> bool:
+def series_equal(a: Series, b: Series, rtol: float = None, atol: float = None) -> bool:
     rtol = rtol or RTOL
     atol = atol or ATOL
     cond1 = a.name == b.name
