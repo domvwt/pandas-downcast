@@ -1,9 +1,5 @@
-from typing import Union
-
 import numpy as np
 import pandas as pd
-
-FrameOrSeries = Union[pd.DataFrame, pd.Series]
 
 ALL_NAN_TYPE = pd.Int8Dtype()
 
