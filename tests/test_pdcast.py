@@ -143,3 +143,19 @@ def test_datetypes(input_srs):
 def test_numpy_only(input_srs, expected):
     output_dtype = infer_dtype(input_srs, numpy_dtypes_only=True)
     assert output_dtype == expected
+
+def test_nan_in_long_integer_series():
+    input_series = pd.Series([x for x in range(100_000)])
+    midway = len(input_series) // 2
+    input_series[midway] = np.nan
+    output_series = pdc.downcast(input_series)
+    output_dtype = output_series.dtype
+    assert output_dtype == pd.UInt32Dtype()
+
+def test_nan_in_long_integer_series_numpy_only():
+    input_series = pd.Series([x for x in range(100_000)])
+    midway = len(input_series) // 2
+    input_series[midway] = np.nan
+    output_series = pdc.downcast(input_series, numpy_dtypes_only=True)
+    output_dtype = output_series.dtype
+    assert output_dtype == np.float32
